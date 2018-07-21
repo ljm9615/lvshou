@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def load_data():
-    data = pd.read_csv(r"E:\cike\绿瘦\zhijian_data\conversation.csv", sep=',', encoding="utf-8")
+    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\conversation.csv", sep=',', encoding="utf-8")
     data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     data['conversation'] = data['conversation'].apply(eval)
@@ -43,13 +43,14 @@ def get_agent_sentences(data):
                 agent_sentences.append(sentence['AGENT'])
         all_agent_sentences.append(' '.join(agent_sentences))
     data['agent_sentences'] = all_agent_sentences
-    data[['analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'agent_sentences']].to_csv(
-        r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding='utf-8', index=False)
+    print(data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'agent_sentences']])
+    data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'agent_sentences']].\
+        to_csv(r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding='utf-8', index=False)
 
 
 if __name__ == "__main__":
     data = load_data()
-    path = "E:\cike\绿瘦\zhijian_data" + '\\'
+    # path = "E:\cike\lvshou\zhijian_data" + '\\'
     # divide(data, rule=['敏感词'], path=path + "敏感词" + '\\')
     # divide(data, rule=['禁忌称谓'], path=path + "禁忌称谓" + '\\')
     # divide(data, rule=['部门名称', '禁忌部门名称'], path=path + "禁忌部门名称" + '\\')
