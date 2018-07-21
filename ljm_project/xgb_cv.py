@@ -8,10 +8,11 @@ import xgboost as xgb
 random.seed(2018)
 
 
-def load_data(rule):
+def load_data(rule=''):
     data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding="utf-8")
     data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList']. \
-        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称") for word in x])
+        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     if not rule:
         return data
@@ -83,6 +84,31 @@ def xgb_cv(weight, label, k_fold):
             f.write(str(p) + '\n')
 
 
+def xgb_cv_k_fold():
+    # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
+    # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
+    weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\count_window_weight.npy")
+    label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\label_window.npy")
+
+    print(weight.shape)
+    print(label.shape)
+    xgb_cv(weight, label, 5)
+
+    pred = []
+    with open(r"E:\cike\lvshou\zhijian_data\xgb_pred.txt", 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            p = float(line.strip())
+            if p > 0.5:
+                pred.append(1)
+            else:
+                pred.append(0)
+
+    print("precision: ", precision_score(label, pred))
+    print("recall: ", recall_score(label, pred))
+    print("micro :", f1_score(label, pred, average="micro"))
+    print("macro: ", f1_score(label, pred, average="macro"))
+
+
 def get_label_index(data, rule):
     index = []
     not_index = []
@@ -100,31 +126,4 @@ def get_label_index(data, rule):
 
 
 if __name__ == "__main__":
-    data = load_data(rule="敏感词")
-    weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight.npy")
-
-    index, not_index = get_label_index(data, "敏感词")
-    label = np.zeros(shape=(len(data, )), dtype=int)
-    not_index = random.sample(not_index, len(index))
-    label[index] = 1
-    index.extend(not_index)
-    random.shuffle(index)
-
-    weight = weight[index]
-    label = label[index]
-
-    xgb_cv(weight, label, 5)
-
-    pred = []
-    with open(r"E:\cike\lvshou\zhijian_data\lgb_pred.txt", 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            p = float(line.strip())
-            if p > 0.5:
-                pred.append(1)
-            else:
-                pred.append(0)
-
-    print("precision: ", precision_score(label, pred))
-    print("recall: ", recall_score(label, pred))
-    print("micro :", f1_score(label, pred, average="micro"))
-    print("macro: ", f1_score(label, pred, average="macro"))
+    xgb_cv_k_fold()

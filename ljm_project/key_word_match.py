@@ -3,9 +3,10 @@ import csv
 
 
 def load_data():
-    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding="utf-8")
+    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',', encoding="utf-8")
     data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].\
-        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称") for word in x])
+        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     return data
 
@@ -15,13 +16,6 @@ def get_precision(data, rule):
     with open(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + ".txt", 'r', encoding='utf-8') as f:
         for line in f.readlines():
             key_words.append(line.strip())
-    # print(set(key_words))
-    # key_words = ['权威顾问', '专案组负责人', '资深顾问组负责人', '负责人助手营养师',
-    #              '海外留学', '特助', '助手', '首席资深顾问', '高级顾问',
-    #              '效果中心总负责人', '老爷子', '资深组办公室负责人', '负责人', '博士',
-    #              '秘书', '教练', '元老级', '高级资深顾问', '助理', '资深指导',
-    #              '老师', '元老级人物', '效果中心负责人', '首席资深', '效果中心调查员',
-    #              '减肥师总监', '指导员', '资深人士', '专家', '资深组长']
 
     all_word_counter = {}
     right_word_counter = {}
@@ -32,7 +26,7 @@ def get_precision(data, rule):
     all_illegal_num = 0  # 关键词匹配到的所有样本个数，TP + FP
 
     # 对每个数据样本
-    for sentences in data['agent_sentences']:
+    for sentences in data['sentences']:
 
         # 遍历其检测出的违规类型
         for i, item in enumerate(data['analysisData.illegalHitData.ruleNameList'][counter]):
@@ -44,7 +38,6 @@ def get_precision(data, rule):
         for key_word in key_words:
             # 违规词在句子中
             if key_word in sentences:
-                flag = 0
                 all_illegal_num += 1
                 all_word_counter[key_word] = all_word_counter.get(key_word, 0) + 1
                 # 遍历其检测出的违规类型
@@ -53,11 +46,6 @@ def get_precision(data, rule):
                     if rule == item and data['correctInfoData.correctResult'][counter].get("correctResult")[i] == '1':
                         right_illegal_num += 1
                         right_word_counter[key_word] = right_word_counter.get(key_word, 0) + 1
-                        flag = 1
-                    elif rule == item:
-                        flag = 1
-                if flag == 0:
-                    print(data['UUID'][counter], key_word)
                 # 检测出一个违规词，证明该样本已违规
                 break
         counter += 1
@@ -70,4 +58,4 @@ def get_precision(data, rule):
 
 if __name__ == "__main__":
     data = load_data()
-    get_precision(data, "敏感词")
+    get_precision(data, "禁忌称谓")

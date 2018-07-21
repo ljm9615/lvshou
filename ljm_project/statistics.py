@@ -1,9 +1,36 @@
 import pandas as pd
+import csv
+import jieba
+jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\敏感词.txt")
+jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\部门名称.txt")
+jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\禁忌称谓.txt")
+csv.field_size_limit(500 * 1024 * 1024)
+
+
+def data_concat():
+    data_writer = csv.writer(open(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data.csv", 'w',
+                                  encoding='utf-8', newline=''))
+    data_writer.writerow(["UUID", "analysisData.illegalHitData.ruleNameList",
+                          "correctInfoData.correctResult", "sentences"])
+    ids = []
+    data1_reader = csv.reader(open(r"E:\cike\lvshou\zhijian_data\zhijian_data.csv", 'r', encoding='utf-8'))
+    data2_reader = csv.reader(open(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data_20180709.csv",
+                                   'r', encoding='utf-8'))
+    for line in data1_reader:
+        if line[0] in ids or line[7] == "transData.sentenceList":
+            continue
+        ids.append(line[0])
+        data_writer.writerow([line[0], line[3], line[6], get_sentences(eval(line[7]))])
+    for line in data2_reader:
+        if line[0] in ids or line[7] == "transData.sentenceList":
+            continue
+        ids.append(line[0])
+        data_writer.writerow([line[0], line[3], line[6], get_sentences(eval(line[7]))])
 
 
 def statistics():
-    # 10264
-    data = pd.read_csv(r"E:\cike\绿瘦\zhijian_data\zhijian_data.csv", sep=',')
+    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',')
+    print(len(data))
     data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     all_illegal = []
@@ -35,16 +62,31 @@ def statistics():
 def get_sentences(sentence_list):
     sentence_content = []
     for sentence in sentence_list:
-        single_sentence = {sentence.get("role"): sentence.get("content")}
-        sentence_content.append(single_sentence)
-    return sentence_content
+        if sentence.get("role") == "AGENT":
+            sentence_content.append(sentence.get("content"))
+    return ' '.join(sentence_content)
+
+
+def cut_words(sentences):
+    words = " ".join(list(jieba.cut(sentences)))
+    return words
+
+
+def cut():
+    print("load data...")
+    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data.csv", sep=',', encoding="utf-8")
+    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList']. \
+        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
+    data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
+
+    print("cutting...")
+    data['sentences'] = data['sentences'].apply(cut_words)
+    data.to_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',',
+                encoding="utf-8", index=False)
 
 
 if __name__ == "__main__":
+    # data_concat()
     # statistics()
-    data = pd.read_csv(r"E:\cike\绿瘦\zhijian_data\zhijian_data.csv", sep=',')
-    data['conversation'] = data['transData.sentenceList'].apply(eval).apply(get_sentences)
-    data[['UUID', 'relateData.sourceCustomerId', 'relateData.workNo', 'analysisData.illegalHitData.ruleNameList',
-          'analysisData.isIllegal', 'manualData.isChecked', 'correctInfoData.correctResult', 'conversation']]\
-        .to_csv(r"E:\cike\绿瘦\zhijian_data\conversation.csv", sep=',', index=False, encoding='utf-8')
-
+    cut()

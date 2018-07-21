@@ -1,17 +1,18 @@
 import numpy as np
 import random
 from sklearn.model_selection import KFold
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import pandas as pd
 import lightgbm as lgb
 
 random.seed(2018)
 
 
-def load_data(rule):
+def load_data(rule=''):
     data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding="utf-8")
     data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList']. \
-        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称") for word in x])
+        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     if not rule:
         return data
@@ -55,45 +56,91 @@ def lgb_cv(weight, label, k_fold):
         print("predicting...")
         preds.extend(test_preds)
 
-    with open(r"E:\cike\lvshou\zhijian_data\lgb_pred.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data\wzsy.txt", 'w', encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
 
 
-def get_label_index(data, rule):
-    index = []
-    not_index = []
+def key_lgb_cv():
+    train_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\train_weight.npy")
+    train_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\train_label.npy")
+    test_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\val_weight.npy")
+    test_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\val_label.npy")
+    test_key_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\key_match_val_label.npy")
 
-    # 对每个数据样本，遍历其检测出的违规类型
-    for counter in range(len(data)):
-        for i, item in enumerate(data['analysisData.illegalHitData.ruleNameList'][counter]):
-            # 如果违规类型为要统计的类型且检测结果正确，总数量加1
-            if rule == item and data['correctInfoData.correctResult'][counter].get("correctResult")[i] == '1':
-                index.append(counter)
-    for i in range(len(data)):
-        if i not in index:
-            not_index.append(i)
-    return index, not_index
+    print(train_weight.shape)
+    print(train_label.shape)
+    print(test_weight.shape)
+    print(test_label.shape)
+    print(test_key_label.shape)
+
+    pred = np.zeros(shape=test_label.shape, dtype=int)
+    key_match_idx = []
+    for i in range(len(test_key_label)):
+        if test_key_label[i] == 1:
+            key_match_idx.append(i)
+    not_match_idx = [i for i in range(len(test_key_label)) if i not in key_match_idx]
+
+    print("关键词匹配到的数据数量为：" + str(len(key_match_idx)))
+    print("针对这些数据使用模型预测...")
+    clf_val = lgb.LGBMClassifier(num_leaves=35, max_depth=7, n_estimators=20000, n_jobs=20, learning_rate=0.01,
+                                 colsample_bytree=0.8, subsample=0.8)
+    lgb_model_val = clf_val.fit(
+        train_weight[:6000], train_label[:6000], eval_set=[(train_weight[:6000], train_label[:6000]),
+                                                           (train_weight[6000:], train_label[6000:])],
+        early_stopping_rounds=100, verbose=1)
+    best_iter = lgb_model_val.best_iteration_
+    print(best_iter)
+    clf = lgb.LGBMClassifier(num_leaves=35, max_depth=7, n_estimators=best_iter, n_jobs=20, learning_rate=0.01,
+                             colsample_bytree=0.8, subsample=0.8)
+    lgb_model = clf.fit(
+        train_weight, train_label, eval_set=[(train_weight, train_label)], early_stopping_rounds=100, verbose=1)
+
+    key_match_pred = lgb_model.predict_proba(test_weight[key_match_idx])[:, 1]
+    print(len(key_match_pred))
+    key_match_label = []
+    for p in key_match_pred:
+        if p > 0.5:
+            key_match_label.append(1)
+        else:
+            key_match_label.append(0)
+    print(len(key_match_label))
+    pred[key_match_idx] = key_match_label
+
+    print("关键词匹配到的数据中：")
+    print("precision: ", precision_score(test_label[key_match_idx], pred[key_match_idx]))
+    print("recall: ", recall_score(test_label[key_match_idx], pred[key_match_idx]))
+    print("accuracy: ", accuracy_score(test_label[key_match_idx], pred[key_match_idx]))
+    print("micro :", f1_score(test_label[key_match_idx], pred[key_match_idx], average="micro"))
+    print("macro: ", f1_score(test_label[key_match_idx], pred[key_match_idx], average="macro"))
+
+    print("关键词未匹配到的数据中：")
+    print("precision: ", precision_score(test_label[not_match_idx], pred[not_match_idx]))
+    print("recall: ", recall_score(test_label[not_match_idx], pred[not_match_idx]))
+    print("accuracy: ", accuracy_score(test_label[not_match_idx], pred[not_match_idx]))
+    print("micro :", f1_score(test_label[not_match_idx], pred[not_match_idx], average="micro"))
+    print("macro: ", f1_score(test_label[not_match_idx], pred[not_match_idx], average="macro"))
+
+    print("全部数据中：")
+    print("precision: ", precision_score(test_label, pred))
+    print("recall: ", recall_score(test_label, pred))
+    print("accuracy: ", accuracy_score(test_label, pred))
+    print("micro :", f1_score(test_label, pred, average="micro"))
+    print("macro: ", f1_score(test_label, pred, average="macro"))
 
 
-if __name__ == "__main__":
-    data = load_data(rule="敏感词")
-    weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight.npy")
+def lgb_cv_k_fold(rule):
+    # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
+    # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
+    weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\count_window_weight.npy")
+    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\label_window.npy")
 
-    index, not_index = get_label_index(data, "敏感词")
-    label = np.zeros(shape=(len(data, )), dtype=int)
-    not_index = random.sample(not_index, len(index))
-    label[index] = 1
-    index.extend(not_index)
-    random.shuffle(index)
-
-    weight = weight[index]
-    label = label[index]
-
+    print(weight.shape)
+    print(label.shape)
     lgb_cv(weight, label, 5)
 
     pred = []
-    with open(r"E:\cike\lvshou\zhijian_data\lgb_pred.txt", 'r', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data\wzsy.txt", 'r', encoding='utf-8') as f:
         for line in f.readlines():
             p = float(line.strip())
             if p > 0.5:
@@ -105,3 +152,8 @@ if __name__ == "__main__":
     print("recall: ", recall_score(label, pred))
     print("micro :", f1_score(label, pred, average="micro"))
     print("macro: ", f1_score(label, pred, average="macro"))
+
+
+if __name__ == "__main__":
+    # key_lgb_cv()
+    lgb_cv_k_fold(rule="无中生有")

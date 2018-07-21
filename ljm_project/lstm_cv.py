@@ -5,8 +5,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 import pandas as pd
 from keras.utils import np_utils
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Convolution1D, MaxPooling1D
+from keras.layers import Dense, LSTM
 from keras.callbacks import EarlyStopping
 
 random.seed(2018)
@@ -41,7 +40,7 @@ def load_data(rule=''):
         return data.iloc[index].reset_index()
 
 
-def cnn_cv(weight, label, k_fold):
+def lstm_cv(weight, label, k_fold):
     train = np.reshape(weight, (weight.shape[0], weight.shape[1], 1))
     print(train.shape)
 
@@ -65,20 +64,7 @@ def cnn_cv(weight, label, k_fold):
         model = Sequential()
 
         # model.add(Dense(128, input_shape=(100, 1)))
-        model.add(Convolution1D(64, 2, padding='same', input_shape=(10000, 1)))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.3))
-
-        model.add(Convolution1D(64, 2, padding='same'))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.3))
-        model.add(MaxPooling1D(pool_size=2))
-
-        model.add(Flatten())
-        model.add(Dense(64))
-        model.add(Dropout(0.3))
-        model.add(Activation('relu'))
-
+        model.add(LSTM(64, input_shape=(50000, 1)))
         model.add(Dense(class_num, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
@@ -94,7 +80,7 @@ def cnn_cv(weight, label, k_fold):
         y_pred_label = model.predict(X_val)
         preds.extend(y_pred_label[:, 1])
         pred_labels.extend(np.argmax(y_pred_label, axis=1))
-    with open(r"E:\cike\lvshou\zhijian_data\cnn_pred.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data\lstm_pred.txt", 'w', encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
         # print('Test score:', score[0])
@@ -120,12 +106,11 @@ def get_label_index(data, rule):
 
 
 if __name__ == "__main__":
-    weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_mgc.npy")
-    label = np.load(r"E:\cike\lvshou\zhijian_data\label_mgc.npy")
+    weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight.npy")
+    label = np.load(r"E:\cike\lvshou\zhijian_data\label.npy")
 
-    cnn_cv(weight, label, k_fold=5)
     pred = []
-    with open(r"E:\cike\lvshou\zhijian_data\cnn_pred.txt", 'r', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data\lstm_pred.txt", 'r', encoding='utf-8') as f:
         for line in f.readlines():
             p = float(line.strip())
             if p > 0.5:
