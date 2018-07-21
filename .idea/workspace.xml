@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a6216e87-a26d-4905-8223-6d389105cdf9" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ljm_project/bdc.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ljm_project/cnn_cv.py" afterPath="$PROJECT_DIR$/ljm_project/cnn_cv.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ljm_project/key_word_match.py" afterPath="$PROJECT_DIR$/ljm_project/key_word_match.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ljm_project/lgb_cv.py" afterPath="$PROJECT_DIR$/ljm_project/lgb_cv.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ljm_project/statistics.py" afterPath="$PROJECT_DIR$/ljm_project/statistics.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ljm_project/xgb_cv.py" afterPath="$PROJECT_DIR$/ljm_project/xgb_cv.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/ljm_project/cv.py" afterPath="$PROJECT_DIR$/ljm_project/count.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -33,42 +27,7 @@
               <caret line="60" column="29" lean-forward="false" selection-start-line="60" selection-start-column="29" selection-end-line="60" selection-end-column="29" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="cnn_cv.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ljm_project/cnn_cv.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1936">
-              <caret line="97" column="23" lean-forward="false" selection-start-line="97" selection-start-column="23" selection-end-line="97" selection-end-column="23" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="lgb_cv.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ljm_project/lgb_cv.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="141" column="13" lean-forward="false" selection-start-line="141" selection-start-column="13" selection-end-line="141" selection-end-column="13" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="xgb_cv.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ljm_project/xgb_cv.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2728">
-              <caret line="129" column="0" lean-forward="false" selection-start-line="129" selection-start-column="0" selection-end-line="129" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
+                <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
               </folding>
             </state>
           </provider>
@@ -86,6 +45,7 @@
           </provider>
         </entry>
       </file>
+<<<<<<< HEAD
       <file leaf-file-name="count.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ljm_project/count.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -142,6 +102,13 @@
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+      <file leaf-file-name="split.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ljm_project/split.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="198">
+              <caret line="21" column="38" lean-forward="false" selection-start-line="21" selection-start-column="38" selection-end-line="21" selection-end-column="38" />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
               <folding />
             </state>
           </provider>
@@ -419,6 +386,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+<<<<<<< HEAD
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3294893" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -429,6 +397,18 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+=======
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3261944" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3294893" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36611196" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3970346" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
@@ -450,8 +430,12 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -481,9 +465,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5060">
           <caret line="246" column="0" lean-forward="false" selection-start-line="246" selection-start-column="0" selection-end-line="246" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -493,6 +474,7 @@
           <caret line="52" column="88" lean-forward="false" selection-start-line="52" selection-start-column="88" selection-end-line="52" selection-end-column="88" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
           </folding>
         </state>
       </provider>
@@ -515,9 +497,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5742">
           <caret line="276" column="23" lean-forward="false" selection-start-line="276" selection-start-column="23" selection-end-line="276" selection-end-column="23" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -527,7 +506,11 @@
           <caret line="52" column="88" lean-forward="false" selection-start-line="52" selection-start-column="88" selection-end-line="52" selection-end-column="88" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
+<<<<<<< HEAD
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -551,12 +534,15 @@
         <state relative-caret-position="4334">
           <caret line="207" column="23" lean-forward="false" selection-start-line="207" selection-start-column="23" selection-end-line="207" selection-end-column="23" />
 <<<<<<< HEAD
+<<<<<<< HEAD
           <folding />
 =======
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
@@ -567,9 +553,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -600,12 +590,15 @@
         <state relative-caret-position="1122">
           <caret line="54" column="0" lean-forward="true" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
 <<<<<<< HEAD
+<<<<<<< HEAD
           <folding />
 =======
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
@@ -616,9 +609,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -644,9 +641,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -672,9 +673,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -700,9 +705,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -765,12 +774,15 @@
         <state relative-caret-position="1936">
           <caret line="97" column="23" lean-forward="false" selection-start-line="97" selection-start-column="23" selection-end-line="97" selection-end-column="23" />
 <<<<<<< HEAD
+<<<<<<< HEAD
           <folding />
 =======
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
@@ -803,12 +815,15 @@
         <state relative-caret-position="2728">
           <caret line="129" column="0" lean-forward="false" selection-start-line="129" selection-start-column="0" selection-end-line="129" selection-end-column="0" />
 <<<<<<< HEAD
+<<<<<<< HEAD
           <folding />
 =======
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
@@ -821,6 +836,7 @@
 =======
         <state relative-caret-position="1716">
           <caret line="84" column="48" lean-forward="false" selection-start-line="84" selection-start-column="48" selection-end-line="84" selection-end-column="48" />
+<<<<<<< HEAD
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -844,16 +860,16 @@
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
           <folding />
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ljm_project/bdc.py" />
     <entry file="file://$PROJECT_DIR$/ljm_project/lgb_cv.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="264">
           <caret line="141" column="13" lean-forward="false" selection-start-line="141" selection-start-column="13" selection-end-line="141" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -864,9 +880,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <marker date="1532166052955" expanded="true" signature="1256:1258" ph="..." />
 =======
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+            <marker date="1532166109735" expanded="true" signature="2535:2537" ph="..." />
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
           </folding>
         </state>
       </provider>
@@ -876,19 +896,22 @@
         <state relative-caret-position="125">
           <caret line="268" column="25" lean-forward="false" selection-start-line="268" selection-start-column="25" selection-end-line="268" selection-end-column="25" />
 <<<<<<< HEAD
+<<<<<<< HEAD
           <folding />
 =======
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
 >>>>>>> 49308c0993b983f92f48247489a8c63e8bea9297
+=======
+>>>>>>> 648f236512180a5ccae67defc1c864b05df6231e
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ljm_project/split.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="506">
-          <caret line="35" column="0" lean-forward="true" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
+        <state relative-caret-position="198">
+          <caret line="21" column="38" lean-forward="false" selection-start-line="21" selection-start-column="38" selection-end-line="21" selection-end-column="38" />
           <folding />
         </state>
       </provider>
@@ -897,7 +920,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
