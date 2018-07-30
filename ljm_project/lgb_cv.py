@@ -37,7 +37,7 @@ def load_data(rule=''):
         return data.iloc[index].reset_index()
 
 
-def lgb_cv(weight, label, k_fold):
+def lgb_cv(weight, label, k_fold, rule):
     train = weight
     kf = KFold(n_splits=k_fold)
     preds =[]
@@ -50,23 +50,23 @@ def lgb_cv(weight, label, k_fold):
         X_val = train[test_idx]
         y_val = label[test_idx]
         lgb_model = clf.fit(
-            X, y, eval_set=[(X, y), (X_val, y_val)], early_stopping_rounds=100, verbose=1)
+            X, y, eval_set=[(X, y), (X_val, y_val)], early_stopping_rounds=100, verbose=0)
         test_preds = lgb_model.predict_proba(X_val)[:, 1]
 
         print("predicting...")
         preds.extend(test_preds)
 
-    with open(r"E:\cike\lvshou\zhijian_data\wzsy.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_18000.txt", 'w', encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
 
 
 def key_lgb_cv():
-    train_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\train_weight.npy")
-    train_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\train_label.npy")
-    test_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\val_weight.npy")
-    test_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\val_label.npy")
-    test_key_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\key_match_val_label.npy")
+    train_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\weight\train_weight.npy")
+    train_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\weight\train_label.npy")
+    test_weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\weight\val_weight.npy")
+    test_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\weight\val_label.npy")
+    test_key_label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\weight\key_match_val_label.npy")
 
     print(train_weight.shape)
     print(train_label.shape)
@@ -132,15 +132,32 @@ def key_lgb_cv():
 def lgb_cv_k_fold(rule):
     # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
     # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
-    weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\count_window_weight.npy")
-    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\label_window.npy")
+    weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\count_weight_18000.npy")
+    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_18000.npy")
 
     print(weight.shape)
     print(label.shape)
-    lgb_cv(weight, label, 5)
+    lgb_cv(weight, label, 5, rule)
 
     pred = []
-    with open(r"E:\cike\lvshou\zhijian_data\wzsy.txt", 'r', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_18000.txt", 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            p = float(line.strip())
+            if p > 0.5:
+                pred.append(1)
+            else:
+                pred.append(0)
+
+    print("precision: ", precision_score(label, pred))
+    print("recall: ", recall_score(label, pred))
+    print("micro :", f1_score(label, pred, average="micro"))
+    print("macro: ", f1_score(label, pred, average="macro"))
+
+
+def show_result(rule, feature):
+    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_" + str(feature) + ".npy")
+    pred = []
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_" + str(feature) + ".txt", 'r', encoding='utf-8') as f:
         for line in f.readlines():
             p = float(line.strip())
             if p > 0.5:
@@ -156,4 +173,11 @@ def lgb_cv_k_fold(rule):
 
 if __name__ == "__main__":
     # key_lgb_cv()
-    lgb_cv_k_fold(rule="无中生有")
+    rules = ["过度承诺效果", "无中生有", "投诉倾向", "投诉", "服务态度生硬恶劣", "不礼貌", "草率销售", "违反指南销售"]
+    # for rule in rules:
+    #     lgb_cv_k_fold(rule=rule)
+
+    for rule in rules:
+        print(rule)
+        show_result(rule, feature=15000)
+        print()

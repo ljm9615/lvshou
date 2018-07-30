@@ -8,36 +8,7 @@ import xgboost as xgb
 random.seed(2018)
 
 
-def load_data(rule=''):
-    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\agent_sentences.csv", sep=',', encoding="utf-8")
-    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList']. \
-        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
-                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
-    data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
-    if not rule:
-        return data
-    else:
-        key_words = []
-        counter = 0
-        index = []
-        with open(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + ".txt", 'r', encoding='utf-8') as f:
-            for line in f.readlines():
-                key_words.append(line.strip())
-
-        # 对每个数据样本
-        for sentences in data['agent_sentences']:
-
-            # 针对该样本统计遍历违规词，计算是否在句子中
-            for key_word in key_words:
-                # 违规词在句子中
-                if key_word in sentences:
-                    index.append(counter)
-                    break
-            counter += 1
-        return data.iloc[index].reset_index()
-
-
-def xgb_cv(weight, label, k_fold):
+def xgb_cv(weight, label, k_fold, rule):
     train = weight
 
     params = {
@@ -55,7 +26,7 @@ def xgb_cv(weight, label, k_fold):
         'silent': 0,  # 设置成1则没有运行信息输出，最好是设置为0.
         'eta': 0.05,  # 如同学习率
         'seed': 1000,
-        'eval_metric': 'logloss'
+        'eval_metric': 'logloss',
     }
     num_rounds = 20000  # 迭代次数
 
@@ -73,13 +44,13 @@ def xgb_cv(weight, label, k_fold):
 
         watchlist = [(xgb_train, 'train'), (xgb_val, 'val')]
         print('Training xgboost model...')
-        model = xgb.train(params, xgb_train, num_rounds, watchlist, early_stopping_rounds=100)
+        model = xgb.train(params, xgb_train, num_rounds, watchlist, early_stopping_rounds=100, verbose_eval=False)
         print("best best_ntree_limit", model.best_ntree_limit)
 
         print("predicting...")
         test_preds = model.predict(xgb_val, ntree_limit=model.best_ntree_limit)
         preds.extend(test_preds)
-    with open(r"E:\cike\lvshou\zhijian_data\xgb_pred.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + r"result\xgb_15000.txt", 'w', encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
 
@@ -87,42 +58,29 @@ def xgb_cv(weight, label, k_fold):
 def xgb_cv_k_fold():
     # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
     # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
-    weight = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\count_window_weight.npy")
-    label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\label_window.npy")
+    rules = ["过度承诺效果", "无中生有", "投诉倾向", "投诉", "服务态度生硬恶劣", "不礼貌", "草率销售", "违反指南销售"]
+    for rule in rules:
+        weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\count_weight_15000.npy")
+        label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_15000.npy")
 
-    print(weight.shape)
-    print(label.shape)
-    xgb_cv(weight, label, 5)
+        print(weight.shape)
+        print(label.shape)
+        xgb_cv(weight, label, 5, rule)
 
-    pred = []
-    with open(r"E:\cike\lvshou\zhijian_data\xgb_pred.txt", 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            p = float(line.strip())
-            if p > 0.5:
-                pred.append(1)
-            else:
-                pred.append(0)
+        pred = []
+        with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + r"result\xgb_15000.txt", 'r',
+                  encoding='utf-8') as f:
+            for line in f.readlines():
+                p = float(line.strip())
+                if p > 0.5:
+                    pred.append(1)
+                else:
+                    pred.append(0)
 
-    print("precision: ", precision_score(label, pred))
-    print("recall: ", recall_score(label, pred))
-    print("micro :", f1_score(label, pred, average="micro"))
-    print("macro: ", f1_score(label, pred, average="macro"))
-
-
-def get_label_index(data, rule):
-    index = []
-    not_index = []
-
-    # 对每个数据样本，遍历其检测出的违规类型
-    for counter in range(len(data)):
-        for i, item in enumerate(data['analysisData.illegalHitData.ruleNameList'][counter]):
-            # 如果违规类型为要统计的类型且检测结果正确，总数量加1
-            if rule == item and data['correctInfoData.correctResult'][counter].get("correctResult")[i] == '1':
-                index.append(counter)
-    for i in range(len(data)):
-        if i not in index:
-            not_index.append(i)
-    return index, not_index
+        print("precision: ", precision_score(label, pred))
+        print("recall: ", recall_score(label, pred))
+        print("micro :", f1_score(label, pred, average="micro"))
+        print("macro: ", f1_score(label, pred, average="macro"))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 import pandas as pd
 import csv
 import jieba
+import os
+import re
+
 jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\敏感词.txt")
 jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\部门名称.txt")
 jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\禁忌称谓.txt")
@@ -67,7 +70,23 @@ def get_sentences(sentence_list):
     return ' '.join(sentence_content)
 
 
-def cut_words(sentences):
+def get_stopwords(path=r"E:\cike\lvshou\zhijian_data\stopwords.txt"):
+    stop_file = path
+    if not os.path.exists(stop_file):
+        return []
+    with open(stop_file, 'rb+') as fr:
+        data = fr.read()
+    stopwords = [_ for _ in data.decode("utf-8").strip().split('\n')]
+    del data
+    return stopwords
+
+
+def cut_words(sentences, stopwords, pattern_list):
+    for _token in stopwords:
+        sentences = sentences.replace(_token, '')
+    for _token in pattern_list:
+        pattern = re.compile(r"%s" % _token)
+        sentences = pattern.sub(' ', sentences)
     words = " ".join(list(jieba.cut(sentences)))
     return words
 
@@ -81,8 +100,11 @@ def cut():
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
 
     print("cutting...")
-    data['sentences'] = data['sentences'].apply(cut_words)
-    data.to_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',',
+    stopwords = get_stopwords()
+    pattern_list = get_stopwords(r"E:\cike\lvshou\zhijian_data\stopre.txt")
+
+    data['sentences'] = data['sentences'].apply(lambda x: cut_words(x, stopwords, pattern_list))
+    data.to_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut_stop.csv", sep=',',
                 encoding="utf-8", index=False)
 
 
