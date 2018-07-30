@@ -1,7 +1,10 @@
 import pandas as pd
 import os
+# PATH1 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data.csv'
+# PATH2 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data_20180709.csv'
 PATH1 = './.data/zhijian_data.csv'
 PATH2 = './.data/zhijian_data_20180709.csv'
+
 
 def load_data(path=PATH1):
     try:
@@ -12,9 +15,15 @@ def load_data(path=PATH1):
             data = pd.read_csv(fr1, sep=',', encoding="gbk")
     finally:
         pass
-    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)
+    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)\
+        .apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                          .replace("过度承诺效果问题", "过度承诺效果")
+                          .replace("投诉倾向", "投诉")
+                          .replace("提示客户录音或实物有法律效力", "提示通话有录音")
+                          .replace("夸大产品功效", "夸大产品效果")for word in x])
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     return data
+
 
 def divide_data(data, path):
     if not os.path.exists(path):
@@ -31,7 +40,6 @@ def divide_data(data, path):
         if len([0 for _ in result if _ =='1'])>1:
             all_rules['多类别'] = all_rules.get('多类别',[])
             all_rules['多类别'].append(i)
-            continue
         for index, l in enumerate(illegal_name):
             if result[index] == '1':
                 all_rules[l] = all_rules.get(l, [])
@@ -40,8 +48,12 @@ def divide_data(data, path):
     for _key, _value in all_rules.items():
         print(_key, len(_value))
         temp_data = data.iloc[_value]
-        with open(path + '{}.csv'.format(_key.replace('/', '-')), 'w') as fw:
+        prepath = os.path.join(path, _key.replace('/', '-'))
+        if not os.path.exists(prepath):
+            os.makedirs(prepath)
+        with open(os.path.join(prepath, '{}.csv'.format(_key.replace('/', '-'))), 'w') as fw:
             temp_data.to_csv(fw, sep=',', index=False, encoding='utf-8')
+
 
 if __name__ == "__main__":
     data1 = load_data(PATH1)
@@ -54,5 +66,6 @@ if __name__ == "__main__":
     data.drop_duplicates(['UUID'], inplace=True)
     data.reset_index(inplace=True)
     print(data.shape)
+    # path = "E:\cike\lvshou\zhijian_data\zhijian_data_20180709\Content" + '\\'
     path = "../../../zhijian_data/"
     divide_data(data, path)
