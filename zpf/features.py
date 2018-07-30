@@ -1,21 +1,23 @@
 import os
 import pandas as pd
 import numpy as np
+np.random.seed(2018)
 from collections import Counter
 from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 import pickle as pk
 import time
-D = 20000
+D = 10000
 SAMPLE = 700
-MIN_DF = 30
-MAX_DF = 0.5
+MIN_DF = 0.3
+MAX_DF = 0.7
 class Features:
     def __init__(self, BDC=True, debug=True, tfbdc=False, qz='DT'):
-        self.tfdbc = tfbdc;self.debug = debug;self.BDC = BDC
-        self.count_vec = CountVectorizer(input='filename', max_df=MAX_DF, min_df=MIN_DF, max_features=10000)
+        self.tfdbc = tfbdc;self.debug = debug;self.BDC = BDC;self.qz = qz
+        if self.qz == 'DT':
+            self.count_vec = CountVectorizer(input='filename', max_df=MAX_DF, min_df=MIN_DF, max_features=20000)
+        else:
+            self.count_vec = CountVectorizer(input='filename')
         self.tfidf_vec = TfidfVectorizer(max_df=MAX_DF, min_df=MIN_DF)
-        self.max_df = MAX_DF; self.min_df = MIN_DF
-        self.qz = qz
 
     def load_token(self, filename):
         tokens = []
@@ -32,10 +34,10 @@ class Features:
             _path = os.path.join(path,_)
             files = os.listdir(_path)
             files = [os.path.join(_path,_) for _ in files if os.path.isfile(os.path.join(_path,_))]
-            _files.extend(files)
-        assert len(_files) == 43292
+            _files.extend(files); _labels.extend([_]*len(files))
+        # assert len(_files) == 43292
         self.count_vec.fit_transform(_files)
-        return list(self.count_vec.vocabulary_.keys())
+        return self.count_vec.vocabulary_.keys()
 
     def get_corpus(self, path):
         label_tokens = {}
@@ -73,7 +75,6 @@ class Features:
     
     def H(self, x):
         return [_ * np.log2(_) if _ != 0 else 0 for _ in x]
-
     # bdc
     def get_bdc(self, W_L_DF, Vocab, label_list, axis=-1):
         '''
@@ -117,73 +118,55 @@ class Features:
         return W_L_DF
 
     # generate X-data|Y-label_list
-    def load_X_Y(self, Vocab_bdc, path, label=''):
-        '''
-        :param Vocab_bdc: 词及bdc值<pd.DataFrame>
-        :param path: 数据集路径<str>
-        :param label: 类别标签<str>
-        :return:
-        '''
-        X, Y, UUIDS = [], [], []
-        num = 0
+    def loadData(self, path, label=''):
         dirs = os.listdir(path)
-        dirs = [_ for _ in dirs if os.path.isdir(os.path.join(path, _))]
-        if label == '': # 多分类
-            labels_id = {_: i for i, _ in enumerate(dirs)}
-        else: # 2分类
-            labels_id = {label: 1}
-        # id_labels = {i: _ for _, i  in labels_id.items()}
-        files, labels = [], []
-        if label == '':
-            for _ in dirs:
-                _files = os.listdir(os.path.join(path, _))
-                _files = [os.path.join(_,__) for __ in _files]
-                np.random.shuffle(_files)
-                files.append(_files[:len(_files)//10])
-                labels.append(_)
-        else:
-            temp_files = []
-            for _ in dirs:
-                _files = os.listdir(os.path.join(path, _))
-                _files = [os.path.join(_, __) for __ in _files]
-                if _ == label:
-                    files.append(_files)
-                    labels.append(_)
-                else:
-                    temp_files.extend(_files)
-            for xxx in range(9):
-                np.random.shuffle(temp_files)
-            files.append(temp_files[:len(files[0])])
-            labels.append('')
-            del(temp_files)
-        del(_files)
-        for i,_ in enumerate(files):
-            for _file in _:
-                _x = []
-                if os.path.isfile(os.path.join(path, _file)):
-                    _x_token = self.load_token(os.path.join(path, _file))
-                    _x_token_counter = Counter(_x_token)
-                    if self.tfdbc:
-                        _x_token_counter = {i: j for i, j in _x_token_counter.items()}
-                    else:
-                        _x_token_counter = {i: 1 for i in _x_token_counter.keys()}
-                    # _x = [_x_token_counter.get(i, 0) for i in Vocab_bdc.index]
-                    _x = [_x_token_counter.get(i, 0)*j for i, j in zip(Vocab_bdc.index, Vocab_bdc['bdc'])]
-                    # _x.extend([_x_token_counter.get(i,0) for i in Vocab_bdc.index])
-                    # _x.append(len(_x_token))
-                    X.append(_x)
-                    _x = None;del(_x_token)
-                    Y.append(labels_id.get(labels[i], 0))
-                    UUIDS.append(_file.split('/')[-1].split('-')[0])
+        dirs = [_ for _ in dirs if os.path.isdir(os.path.join(path,_))]
+        labels_id = {label: 1}
+        files, labels, uuids = [], [], []
+        temp_files = []
+        for _ in dirs:
+            _files = [os.path.join(path,_,__) for __ in os.listdir(os.path.join(path,_))]
+            if _ == label:
+                files.extend(_files); labels.extend([_]*len(_files))
+            else:
+                temp_files.extend(_files)
+        for xxx in range(9):
+            np.random.shuffle(temp_files)
+        files.extend(temp_files[:len(files)]);labels.extend(['']*(len(files)//2))
+        uuids = [os.path.split(i)[-1].split('-')[0] for i in files]
+        return files,labels, labels_id, uuids
 
+    def load_X_Y(self, Vocab_bdc, path, label='', froms='', opt='tf'):
+        X, Y, UUIDS = [], [], []
+        if froms == 'files':
+            files, labels, labels_id, UUIDS = self.loadFileFromU(label=label)
+        elif froms == '':
+            files, labels, labels_id, UUIDS = self.loadData(path, label)
+        for i,_file in enumerate(files):
+            _x = []
+            if os.path.isfile(_file):
+                _x_token = self.load_token(_file)
+                _x_token_counter = Counter(_x_token)
+                if opt == 'tf':
+                    _x = [_x_token_counter.get(i, 0) for i in Vocab_bdc.index]
+                else:
+                    if opt == 'bdc':
+                        _x_token_counter = {_i:1 for _i in _x_token_counter.keys()}
+                    _x = [_x_token_counter.get(i, 0)*j for i, j in zip(Vocab_bdc.index, Vocab_bdc['bdc'])]
+                # _x.append(len(_x_token))
+                X.append(_x)
+                _x = None;del(_x_token)
+                Y.append(labels_id.get(labels[i], 0))
+        print('the # of the datas in training set',len(UUIDS))
+        assert len(X) == len(Y) and len(X) == len(UUIDS)
         return X, Y, labels_id, UUIDS
-        
+
     def load_bdc(self, path_train, label=''):
         _file = './setting/all.pk'
         _file1 = './setting/{}_Vocab_bdc_{}.pk'.format(label,self.BDC)
         if not os.path.exists('./setting'):
             os.makedirs('./setting')
-        if os.path.exists(_file):
+        if os.path.exists(_file) and not self.debug:
             with open(_file, 'rb') as f:
                 label_tokens = pk.load(f)
                 label_list = pk.load(f)
@@ -207,25 +190,26 @@ class Features:
             Vocab_bdc = self.get_bdc(W_L_DF, Vocab, label_list, label_to_id.get(label, -1))
             print('Before filter the shape of Vocab_bdc is', np.shape(Vocab_bdc))
             # 此处有失逻辑
-            if self.qz in ('sum', 'icf'):
+            if self.qz in ('sum', 'icf', 'bdc'):
                 Vocab_bdc = Vocab_bdc.sort_values(by=[self.qz])
                 V_L = Vocab_bdc.shape[0]
-                if type(self.min_df) == type(self.max_df):
-                    if type(self.min_df) is float:
-                        Vocab_bdc = Vocab_bdc.iloc[int(self.min_df*V_L):int(self.max_df*V_L)]
+                if type(MIN_DF) == type(MAX_DF):
+                    if type(MIN_DF) is float:
+                        Vocab_bdc = Vocab_bdc.iloc[int(MIN_DF*V_L):int(MAX_DF*V_L)]
                     else:
-                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz]>=self.min_df]
-                        Vocab_bdc=Vocab_bdc[Vocab_bdc[self.qz]<=self.max_df]
+                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz]>=MIN_DF]
+                        Vocab_bdc=Vocab_bdc[Vocab_bdc[self.qz]<=MAX_DF]
                 else:
-                    if type(self.min_df) is float:
-                        Vocab_bdc = Vocab_bdc.iloc[int(self.min_df * V_L):]
-                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz] <= self.max_df]
+                    if type(MIN_DF) is float:
+                        Vocab_bdc = Vocab_bdc.iloc[int(MIN_DF * V_L):]
+                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz] <= MAX_DF]
                     else:
-                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz] >= self.min_df]
-                        Vocab_bdc = Vocab_bdc.iloc[:int(self.max_df * V_L)]
+                        Vocab_bdc = Vocab_bdc[Vocab_bdc[self.qz] >= MIN_DF]
+                        Vocab_bdc = Vocab_bdc.iloc[:int(MAX_DF * V_L)]
             elif self.qz in ('DT'):
                 words = self.getVocabByDT(path_train)
-                Vocab_bdc = Vocab_bdc.loc[words]
+                Vocab_bdc = Vocab_bdc.loc[list(words)]
+                assert list(Vocab_bdc.index) == list(words)
             print('After filter the shape of Vocab_bdc is', Vocab_bdc.shape)
             Vocab_bdc = Vocab_bdc.sort_values(by=['bdc'])
             Vocab_bdc = Vocab_bdc.tail(D)
@@ -235,6 +219,28 @@ class Features:
                 pk.dump(Vocab_bdc, fw)
 
         return Vocab_bdc
+
+    def loadFileFromU(self,pathin='../../../zhijian_data/Token', label=''):
+        DICTS = {'无中生有': 'wzsy_uuid.txt','违反1+1模式': '1+1_uuid.txt'}
+        _path = DICTS[label]
+        files, tempfile, UUIDS = [], [], []
+        uuids = list(pd.read_csv(_path, header=None)[0]); files = []
+        assert len(uuids) == 1390
+        for _p,_,_f in os.walk(pathin):
+            if len(_f) <= 0:
+                continue
+            if label in _p:
+                files.extend([os.path.join(_p, _) for _ in _f if _.split('-')[0] in uuids])
+            else:
+                tempfile.extend([os.path.join(_p, _) for _ in _f if _.split('-')[0] in uuids])
+        del(uuids);files.extend(tempfile)
+        UUIDS.extend([os.path.split(i)[-1].split('-')[0] for i in files])
+        UUIDS, uindex = np.unique(UUIDS, return_index=True)
+        labels = [i.split('-')[-1].split('.')[0] for i in files]
+        label_id = {label:1}
+        return np.array(files)[uindex], np.array(labels)[uindex], label_id, UUIDS
+
+
 
 if __name__ == '__main__':
     start_time = time.time()

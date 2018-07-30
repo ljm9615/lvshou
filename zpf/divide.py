@@ -28,6 +28,10 @@ def divide_data(data, path):
             all_rules['不违规'] = all_rules.get('不违规', [])
             all_rules['不违规'].append(i)
             continue
+        if len([0 for _ in result if _ =='1'])>1:
+            all_rules['多类别'] = all_rules.get('多类别',[])
+            all_rules['多类别'].append(i)
+            continue
         for index, l in enumerate(illegal_name):
             if result[index] == '1':
                 all_rules[l] = all_rules.get(l, [])
@@ -36,7 +40,7 @@ def divide_data(data, path):
     for _key, _value in all_rules.items():
         print(_key, len(_value))
         temp_data = data.iloc[_value]
-        with open(path + '{}.csv'.format(_key.replace('/', ' ')), 'w') as fw:
+        with open(path + '{}.csv'.format(_key.replace('/', '-')), 'w') as fw:
             temp_data.to_csv(fw, sep=',', index=False, encoding='utf-8')
 
 if __name__ == "__main__":

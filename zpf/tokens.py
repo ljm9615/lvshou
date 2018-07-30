@@ -5,7 +5,6 @@ from divide import load_data
 import time
 import thulac
 import re
-import pandas as pd
 
 def save_file(data, path):
     with open(path, 'wb+') as fw:
@@ -13,14 +12,15 @@ def save_file(data, path):
 
 # 返回停用词列表
 def get_stopwords(path='./setting/stopwords.txt'):
-    stop_file = path
-    if not os.path.exists(stop_file):
-        return []
-    with open(stop_file, 'rb+') as fr:
-        data = fr.read()
-    stopwords = [_ for _ in data.decode('utf-8').strip().split('\n')]
-    del(data)
-    return stopwords
+    return []
+    # stop_file = path
+    # if not os.path.exists(stop_file):
+    #     return []
+    # with open(stop_file, 'rb+') as fr:
+    #     data = fr.read()
+    # stopwords = [_ for _ in data.decode('utf-8').strip().split('\n')]
+    # del(data)
+    # return stopwords
 
 # 单个文件分词
 # inFile, outFile为完整路径(unicode)
@@ -34,8 +34,7 @@ def fenci_file(inFile, outFile):
         pattern = re.compile(r'%s' % _token)
         contens = pattern.sub('', contens)
     words = list(jieba.cut(contens, cut_all=False))
-    words = [word for word in words if len(word) > 1 and word != '\n']
-    # words = [word for word in words if word not in stopwords]
+    # words = [word for word in words if len(word) > 1 and word != '\n']
     with open(outFile, "wb") as fout:
         fout.write(" ".join(words).encode('utf-8', 'ignore'))
 
@@ -69,7 +68,7 @@ class Tokens:
                     _contents = ['{}:{}'.format(_['role'], _['content']) for _ in sentenceList]
                 else:
                     _contents = ['{}'.format(_['content']) for _ in sentenceList if _['role'] == 'AGENT']
-                contens = '\n'.join(_contents);_contents=None
+                contens = '\n'.join(_contents); _contents=None
                 save_file(contens, os.path.join(prepath, '{}-{}.txt'.format(uuid, _labels[i])))
         print('save all contents completed!')
     
@@ -96,8 +95,8 @@ class Tokens:
 
 if __name__ == '__main__':
     start_time = time.time()
-    _tokens = Tokens(alone=True)
+    _tokens = Tokens(alone=False)
     # print(get_stopwords())
-    _tokens.makeContents()
+    # _tokens.makeContents()
     _tokens.makeToken()
     print(time.time()-start_time)
