@@ -77,7 +77,7 @@ class Tokens:
             if not self.alone:
                 file_name = _labels[i] + "_agent_sentences.csv" # XXX_sentences.csv
             else:
-                file_name = _labels[i] + "sentences.csv" # XXX_agent_sentences.csv
+                file_name = _labels[i] + "_sentences.csv" # XXX_agent_sentences.csv
             _file_df.to_csv(os.path.join(prepath, file_name), sep=',',
                             encoding="utf-8", index=False)
             del _file_df
