@@ -1,9 +1,9 @@
 import pandas as pd
 import os
-# PATH1 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data.csv'
-# PATH2 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data_20180709.csv'
-PATH1 = './.data/zhijian_data.csv'
-PATH2 = './.data/zhijian_data_20180709.csv'
+PATH1 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data.csv'
+PATH2 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data_20180709.csv'
+# PATH1 = './.data/zhijian_data.csv'
+# PATH2 = './.data/zhijian_data_20180709.csv'
 
 
 def load_data(path=PATH1):

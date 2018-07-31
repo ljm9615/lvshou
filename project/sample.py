@@ -30,4 +30,5 @@ if __name__ == "__main__":
     data.drop_duplicates(['UUID'], inplace=True)
     data.reset_index(inplace=True)
     print(data.shape)
-    # random_sample_data(data, "sample1.txt")
+    # for i in range(5):
+    #     random_sample_data(data, "sample" + str(i+1) + ".txt")
