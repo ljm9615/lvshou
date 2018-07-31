@@ -3,12 +3,12 @@
 ---
 
 项目目录结构树：
-lvshou
-- project: <文件夹> 预处理，训练预测的超类
-- ljm: <文件夹> 特征工程、模型(和超类保持一致)需单独维护一个readme
-- zpf: <文件夹> 特征工程、模型(和超类保持一致)需单独维护一个readme
-- setting: <文件夹> 保存配置文件
-- readme: <文件> 项目简介
-data
-- zhijian_data.csv
-- zhijian_data_20180709.csv
+- lvshou
+	- project: <文件夹> 预处理，训练预测的超类
+	- ljm: <文件夹> 特征工程、模型(和超类保持一致)需单独维护一个readme
+	- zpf: <文件夹> 特征工程、模型(和超类保持一致)需单独维护一个readme
+	- setting: <文件夹> 保存配置文件
+	- readme: <文件> 项目简介
+- data
+	- zhijian_data.csv
+	- zhijian_data_20180709.csv
