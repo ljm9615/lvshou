@@ -10,7 +10,7 @@ def save_file(data, path):
         fw.write(data.encode('utf-8', 'ignore'))
 
 # 返回停用词列表
-def get_stopwords(path='./setting/stopwords.txt'):
+def get_stopwords(path='../setting/stopwords.txt'):
     return []
     # stop_file = path
     # if not os.path.exists(stop_file):
@@ -29,7 +29,7 @@ def fenci_file(inFile, outFile):
         contens = fin.read().decode('utf-8')
     for _token in get_stopwords():
         contens = contens.replace(_token, "")
-    for _token in get_stopwords('./setting/stopre.txt'):
+    for _token in get_stopwords('../setting/stopre.txt'):
         pattern = re.compile(r'%s' % _token)
         contens = pattern.sub('', contens)
     words = list(jieba.cut(contens, cut_all=False))
@@ -56,8 +56,7 @@ class Tokens:
         '''
         :param alone:是否将user和agent的对话严格分开
         '''
-        # self.path = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709'
-        self.path = '../../../zhijian_data'
+        self.path = '../../data'
         self.content = 'Content'
         self.alone = alone
 
@@ -69,16 +68,16 @@ class Tokens:
         print(_labels)
         for i, _file in enumerate(_files):
             print(i+1, _labels[i])
-            prepath = os.path.join(self.path, self.content, _labels[i])
-            _file_df = load_data(os.path.join(os.path.join(prepath, _file)))
+            prepath = os.path.join(self.path, self.content, _labels[i]) # ../../data/Content/XXX
+            _file_df = load_data(os.path.join(os.path.join(prepath, _file))) # ../../data/Content/XXX/XXX.csv
             if 'transData.sentenceList' not in _file_df.columns:
                 continue
             _file_df['transData.sentenceList'] = _file_df['transData.sentenceList'].apply(eval)\
                 .apply(lambda x: get_sentences(x, self.alone))
             if not self.alone:
-                file_name = _labels[i] + "_sentences.csv"
+                file_name = _labels[i] + "_agent_sentences.csv" # XXX_sentences.csv
             else:
-                file_name = _labels[i] + "_agent_sentences.csv"
+                file_name = _labels[i] + "sentences.csv" # XXX_agent_sentences.csv
             _file_df.to_csv(os.path.join(prepath, file_name), sep=',',
                             encoding="utf-8", index=False)
             del _file_df
@@ -96,12 +95,9 @@ class Tokens:
     def makeToken(self):
         # thu1 = thulac.thulac(seg_only=True)  # 只进行分词，不进行词性标注
         # thu1.cut_f("input.txt", "output.txt")  # 对input.txt文件内容进行分词，输出到output.txt
-        # jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\setting\敏感词.txt")
-        # jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\setting\部门名称.txt")
-        # jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\setting\禁忌称谓.txt")
-        jieba.load_userdict('./setting/userdict1.txt')
+        jieba.load_userdict('../setting/userdict1.txt')
 
-        _content_prepath = os.path.join(self.path, self.content)
+        _content_prepath = os.path.join(self.path, self.content) # ../../data/Content
         # _token_prepath = os.path.join(self.path, self.token)
         _files = os.listdir(_content_prepath)
         _files = [_ for _ in _files] # 所有的文件
@@ -111,7 +107,7 @@ class Tokens:
             print(i+1, _labels[i])
             # if not os.path.exists(_token_prepath):
             #     os.makedirs(_token_prepath)
-            if self.alone:
+            if not self.alone:
                 file_name = _labels[i] + "_agent_sentences.csv"
                 token_name = _labels[i] + "_agent_tokens.csv"
             else:
@@ -135,8 +131,8 @@ class Tokens:
 
 if __name__ == '__main__':
     start_time = time.time()
-    _tokens = Tokens(alone=False)
+    _tokens = Tokens(alone=True)
     # print(get_stopwords())
-    # _tokens.makeContents()
+    _tokens.makeContents()
     _tokens.makeToken()
     print(time.time()-start_time)

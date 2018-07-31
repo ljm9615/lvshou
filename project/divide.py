@@ -1,9 +1,9 @@
+# encoding=utf-8
 import pandas as pd
 import os
-PATH1 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data.csv'
-PATH2 = 'E:\cike\lvshou\zhijian_data\zhijian_data_20180709\zhijian_data_20180709.csv'
-# PATH1 = './.data/zhijian_data.csv'
-# PATH2 = './.data/zhijian_data_20180709.csv'
+
+PATH1 = '../../data/zhijian_data.csv'
+PATH2 = '../../data/zhijian_data_20180709.csv'
 
 
 def load_data(path=PATH1):
@@ -66,6 +66,5 @@ if __name__ == "__main__":
     data.drop_duplicates(['UUID'], inplace=True)
     data.reset_index(inplace=True)
     print(data.shape)
-    # path = "E:\cike\lvshou\zhijian_data\zhijian_data_20180709\Content" + '\\'
-    path = "../../../zhijian_data/"
+    path = "../../data/Content/"
     divide_data(data, path)
