@@ -111,5 +111,6 @@ zpf/.data/*
 zpf/result*
 run.sh
 *.txt
+data
 
 
