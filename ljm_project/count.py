@@ -240,7 +240,7 @@ def get_window_words(sentence, key_words, windows):
     return ' '.join(words)
 
 
-def get_key_window_weight(rule, windows=0):
+def get_key_window_weight(rule, feature, windows=0):
     print("load data...")
     data = load_data()
     if rule in ['敏感词', '部门名称', '禁忌称谓']:
@@ -254,31 +254,35 @@ def get_key_window_weight(rule, windows=0):
 
     print("count vectorizering...")
 
-    count_vect = CountVectorizer(max_df=0.5, min_df=3, max_features=10000)
+    count_vect = CountVectorizer(max_df=0.5, min_df=3, max_features=feature)
     words_counter = count_vect.fit_transform(data['sentences'].values)
     weight = words_counter.toarray()
     print(weight.shape)
 
     print("get label...")
-    index, not_index = get_label_index(data, rule)
-    print(len(index), len(not_index))
-    label = np.zeros(shape=(len(data, )), dtype=int)
-    not_index = random.sample(not_index, len(index))
-    label[index] = 1
-    index.extend(not_index)
-    random.shuffle(index)
+    rules = ["过度承诺效果", "无中生有", "投诉倾向", "投诉", "服务态度生硬/恶劣", "不礼貌", "草率销售", "违反指南销售"]
+    for rule in rules:
+        index, not_index = get_label_index(data, rule)
+        label = np.zeros(shape=(len(data, )), dtype=int)
+        not_index = random.sample(not_index, len(index))
+        label[index] = 1
+        index.extend(not_index)
+        random.shuffle(index)
+        print("get weight and label...")
+        rule_weight = weight[index]
+        rule_label = label[index]
 
-    print("get weight and label...")
-    weight = weight[index]
-    label = label[index]
+        print(rule, rule_weight.shape)
+        print(rule, rule_label.shape)
 
-    print(weight.shape)
-    print(label.shape)
-
-    weight.dump(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\count_window_weight.npy")
-    label.dump(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\label_window.npy")
+        if rule == "服务态度生硬/恶劣":
+            rule = "服务态度生硬恶劣"
+        rule_weight.dump(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\count_weight_" + str(feature) + ".npy")
+        rule_label.dump(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_" + str(feature) + ".npy")
+        data['UUID'][index].to_csv(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\\" + rule + "uuid.txt",
+                                   index=False, encoding='utf-8')
 
 
 if __name__ == "__main__":
     # get_key_count_weight()
-    get_key_window_weight(rule="无中生有")
+    get_key_window_weight(rule="服务态度生硬/恶劣", feature=18000)

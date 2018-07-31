@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-def lgb_cv(weight, label, k_fold):
+def lgb_cv(weight, label, k_fold, rule):
     train = weight
     kf = KFold(n_splits=k_fold)
     preds =[]
@@ -26,23 +26,28 @@ def lgb_cv(weight, label, k_fold):
         print("predicting...")
         preds.extend(test_preds)
 
-    with open(r"E:\cike\lvshou\zhijian_data\stacking.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + r"result\stacking.txt", 'w',
+              encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
 
 
-def lgb_cv_k_fold():
+def lgb_cv_k_fold(rule):
     # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
     # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
-    path = r"E:\cike\lvshou\zhijian_data\result" + '\\'
-    files = ['lgb_pred_10000.txt', 'lgb_pred_12000.txt', 'xgb_pred_10000.txt', 'xgb_pred_12000.txt',
-             'lgb_pred_window_10.txt', 'lgb_pred_window_15.txt', 'lgb_pred_window_20.txt',
-             'xgb_pred_window_10.txt', 'xgb_pred_window_15.txt', 'xgb_pred_window_20.txt']
-    label = np.load(r"E:\cike\lvshou\zhijian_data\敏感词\label_window.npy")
+    path = r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result" + '\\'
+    files = ['lgb_10000.txt', 'lgb_12000.txt', 'lgb_15000.txt', 'lgb_18000.txt',
+             'lgb_20000.txt', 'xgb_10000.txt', 'xgb_15000.txt',
+             ]
+    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_15000.npy")
 
     weight = pd.DataFrame()
     for file in files:
-        pred = pd.read_csv(path + file, header=None)
+        pred = []
+        with open(path + file, 'r', encoding='utf-8') as f:
+            for line in f.readlines():
+                pred.append(float(line.strip()))
+
         # temp = []
         # for item in pred.values:
         #     if item > 0.5:
@@ -56,28 +61,28 @@ def lgb_cv_k_fold():
         # print("micro :", f1_score(label, pred, average="micro"))
         # print("macro: ", f1_score(label, pred, average="macro"))
         # print()
-        weight = pd.concat([weight, pred], axis=1)
+        weight = pd.concat([weight, pd.DataFrame(pred)], axis=1)
     print(weight)
-    weight = weight.apply(sum, axis=1)
-    pred = []
-    for item in weight.values:
-        if item > 5:
-            pred.append(1)
-        else:
-            pred.append(0)
-    #
-    # print(weight.shape)
-    # print(label.shape)
-    # lgb_cv(weight.values, label, 5)
-
+    # weight = weight.apply(sum, axis=1)
     # pred = []
-    # with open(r"E:\cike\lvshou\zhijian_data\stacking.txt", 'r', encoding='utf-8') as f:
-    #     for line in f.readlines():
-    #         p = float(line.strip())
-    #         if p > 0.5:
-    #             pred.append(1)
-    #         else:
-    #             pred.append(0)
+    # for item in weight.values:
+    #     if item > 5:
+    #         pred.append(1)
+    #     else:
+    #         pred.append(0)
+    #
+    print(weight.shape)
+    print(label.shape)
+    lgb_cv(weight.values, label, 5, rule)
+
+    pred = []
+    with open(path + r"stacking.txt", 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            p = float(line.strip())
+            if p > 0.5:
+                pred.append(1)
+            else:
+                pred.append(0)
 
     print("precision: ", precision_score(label, pred))
     print("recall: ", recall_score(label, pred))
@@ -86,4 +91,4 @@ def lgb_cv_k_fold():
 
 
 if __name__ == "__main__":
-    lgb_cv_k_fold()
+    lgb_cv_k_fold(rule="过度承诺效果")
