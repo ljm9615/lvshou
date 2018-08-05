@@ -3,6 +3,7 @@ import csv
 import jieba
 import os
 import re
+import numpy as np
 
 jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\敏感词.txt")
 jieba.load_userdict(r"E:\cike\lvshou\zhijian_data\部门名称.txt")
@@ -31,11 +32,25 @@ def data_concat():
         data_writer.writerow([line[0], line[3], line[6], get_sentences(eval(line[7]))])
 
 
-def statistics():
+def statistics(sample=False):
     data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',')
-    print(len(data))
-    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)
+    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval) \
+        .apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+               .replace("过度承诺效果问题", "过度承诺效果")
+               .replace("投诉倾向", "投诉")
+               .replace("提示客户录音或实物有法律效力", "提示通话有录音")
+               .replace("夸大产品功效", "夸大产品效果") for word in x])
     data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
+
+    if sample:
+        ids = pd.read_csv(r"E:\cike\lvshou\data\Sample\sample_proportion2.txt", header=None).values
+        all_ids = data['UUID']
+        indices = []
+        for i, id in enumerate(all_ids):
+            if id in ids:
+                indices.append(i)
+        data = data.loc[indices].reset_index()
+        print(len(ids), len(data))
     all_illegal = []
     correct_illegal = []
     wrong_illegal = []
@@ -57,9 +72,11 @@ def statistics():
         illegal_counter[illegal] = all_illegal.count(illegal)
         correct_counter[illegal] = correct_illegal.count(illegal)
         wrong_counter[illegal] = wrong_illegal.count(illegal)
-    print(sorted(illegal_counter.items(), key=lambda x: x[1], reverse=True))
-    print(sorted(correct_counter.items(), key=lambda x: x[1], reverse=True))
-    print(sorted(wrong_counter.items(), key=lambda x: x[1], reverse=True))
+    print(len(illegal_counter), sorted(illegal_counter.items(), key=lambda x: x[1], reverse=True))
+    print(len(correct_counter), sorted(correct_counter.items(), key=lambda x: x[1], reverse=True))
+    # print(len(wrong_counter), sorted(wrong_counter.items(), key=lambda x: x[1], reverse=True))
+    return dict(sorted(illegal_counter.items(), key=lambda x: x[1], reverse=True)), \
+           dict(sorted(correct_counter.items(), key=lambda x: x[1], reverse=True))
 
 
 def get_sentences(sentence_list):
@@ -110,5 +127,19 @@ def cut():
 
 if __name__ == "__main__":
     # data_concat()
-    # statistics()
-    cut()
+    all_counter, corrent_counter = statistics()
+    all_sample_counter, corrent_sample_counter = statistics(sample=True)
+    all_sample_rate = {}
+    corrent_sample_rate = {}
+    for key, value in all_sample_counter.items():
+        all_sample_rate[key] = "%.2f%%" % (value / all_counter.get(key, 0) * 100)
+    for key, value in corrent_sample_counter.items():
+        if corrent_counter.get(key, 0) == 0:
+            corrent_sample_rate[key] = 0
+        else:
+            corrent_sample_rate[key] = "%.2f%%" % (value / corrent_counter.get(key, 0) * 100)
+    print(len(all_sample_rate), all_sample_rate)
+    print(len(corrent_sample_rate), corrent_sample_rate)
+    # print(len(all_sample_rate), sorted(all_sample_rate.items(), key=lambda x: x[1], reverse=True))
+    # print(len(corrent_sample_rate), sorted(corrent_sample_rate.items(), key=lambda x: x[1], reverse=True))
+    # cut()

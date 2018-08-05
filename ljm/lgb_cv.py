@@ -50,13 +50,13 @@ def lgb_cv(weight, label, k_fold, rule):
         X_val = train[test_idx]
         y_val = label[test_idx]
         lgb_model = clf.fit(
-            X, y, eval_set=[(X, y), (X_val, y_val)], early_stopping_rounds=100, verbose=0)
+            X, y, eval_set=[(X, y), (X_val, y_val)], early_stopping_rounds=100, verbose=1)
         test_preds = lgb_model.predict_proba(X_val)[:, 1]
 
         print("predicting...")
         preds.extend(test_preds)
 
-    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_18000.txt", 'w', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_new.txt", 'w', encoding='utf-8') as f:
         for p in preds:
             f.write(str(p) + '\n')
 
@@ -132,15 +132,16 @@ def key_lgb_cv():
 def lgb_cv_k_fold(rule):
     # weight = np.load(r"E:\cike\lvshou\zhijian_data\count_weight_jjcw.npy")
     # label = np.load(r"E:\cike\lvshou\zhijian_data\label_jjcw.npy")
-    weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\count_weight_18000.npy")
-    label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_18000.npy")
-
+    # weight = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\count_weight_18000.npy")
+    # label = np.load(r"E:\cike\lvshou\zhijian_data" + '\\' + rule + "\weight\label_18000.npy")
+    weight = np.load(r"E:\cike\lvshou\data\Content\敏感词\敏感词_train_weight_only_sample1.npy")
+    label = np.load(r"E:\cike\lvshou\data\Content\敏感词\敏感词_train_label_only_sample1.npy")
     print(weight.shape)
     print(label.shape)
     lgb_cv(weight, label, 5, rule)
 
     pred = []
-    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_18000.txt", 'r', encoding='utf-8') as f:
+    with open(r"E:\cike\lvshou\zhijian_data" + "\\" + rule + "\\" + "result\lgb_new.txt", 'r', encoding='utf-8') as f:
         for line in f.readlines():
             p = float(line.strip())
             if p > 0.5:
@@ -172,12 +173,13 @@ def show_result(rule, feature):
 
 
 if __name__ == "__main__":
+    lgb_cv_k_fold(rule="敏感词")
     # key_lgb_cv()
-    rules = ["过度承诺效果", "无中生有", "投诉倾向", "投诉", "服务态度生硬恶劣", "不礼貌", "草率销售", "违反指南销售"]
+    # rules = ["过度承诺效果", "无中生有", "投诉倾向", "投诉", "服务态度生硬恶劣", "不礼貌", "草率销售", "违反指南销售"]
     # for rule in rules:
     #     lgb_cv_k_fold(rule=rule)
 
-    for rule in rules:
-        print(rule)
-        show_result(rule, feature=15000)
-        print()
+    # for rule in rules:
+    #     print(rule)
+    #     show_result(rule, feature=15000)
+    #     print()
