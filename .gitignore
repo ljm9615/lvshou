@@ -106,11 +106,8 @@ venv.bak/
 
 # data
 zpf/setting/*
-zpf/.data/*
 .idea
 zpf/result*
 run.sh
 *.txt
 data
-
-
