@@ -2,8 +2,8 @@
 import pandas as pd
 import os
 
-PATH1 = '../../data/zhijian_data.csv'
-PATH2 = '../../data/zhijian_data_20180709.csv'
+PATH1 = '../../zhijian_data/zhijian_data.csv'
+PATH2 = '../../zhijian_data/zhijian_data_20180709.csv'
 
 
 def load_data(path=PATH1):

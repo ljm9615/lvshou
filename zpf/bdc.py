@@ -2,21 +2,15 @@ from tqdm import tqdm
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 import pandas as pd
+import pickle as pk
 from collections import Counter
 import os
-# 目录结构树
-# lvshou
-# - 通用代码区： <文件>预处理、训练预测的超类
-# - ljm ： <文件夹>特征工程、模型(和超类保持一致),需单独维护一个readme
-# - zpf ： <文件夹>特征工程、模型(和超类保持一致),需单独维护一个readme
-# - setting : <文件夹>保存配置文件
-# - readme： <文件>项目简介
-
 
 # Bdc其实是一种有监督的词袋模型
 class Featuers:
     
-    def __init__(self, mindf=3, maxdf=0.9, maxfeature=1500, label=None, Bdc=True):
+    def __init__(self, mindf=3, maxdf=0.9, maxfeature=1500,
+                 label=None, Bdc=True, role='agent', debug=1):
         """计算bdc值
         Parameters
         ----------
@@ -28,14 +22,16 @@ class Featuers:
             int
         label : 所要计算的二分类的bdc值的类别
             str(default None, 表示计算的是多分类的bdc值)
+        role : 对话的角色, in ['agent', 'all', 'customer']
+            str(default agent, 表示只有agent的对话)
         Bdc : 计算Bdc的公式
             bool(default True, 表示采用论文中的公式计算二分类Bdc值)
         """
         self.mindf, self.maxdf, self.maxfeature = mindf, maxdf, maxfeature
-        self.label, self.Bdc = label, Bdc
+        self.label, self.Bdc, self.role, self.debug = label, Bdc, role, debug
 
 
-    def getDF(self, data, labels):
+    def getDF(self, data, labels, k=80):
         """ 将语料集用pd.DataFrame表示
         Parameters
         ----------
@@ -52,32 +48,37 @@ class Featuers:
         vocab : token_id到token的映射
             dict, the format of the vocab like {token_id:token}
         """
-        # vec = CountVectorizer(min_df=3, max_df=0.9, ngram_range=(1,2))
-        vec = CountVectorizer(max_df=0.9, ngram_range=(1,2))
+        vec = CountVectorizer(min_df=3, max_df=0.9, ngram_range=(1,2))
+        # vec = CountVectorizer()
         data = vec.fit_transform(data)
         vocab = {j: i for i, j in vec.vocabulary_.items()}
         
         _label = np.unique(labels)
         labels_token = {} # <dict>{str:[list]}
-        for i in tqdm(range(0, len(labels), 10000)): 
-            if i+10001 >= len(labels):
-            	temp = labels[i:]
+        for i in tqdm(range(0, len(labels), k)):
+            if i+k >= len(labels):
+                temp = labels[i:]
+                temp_data = data[i:]
             else:
-            	temp = labels[i:i+10001]
+                temp = labels[i:i+k]
+                temp_data = data[i:i+k]
             for _ in _label:
-            	labels_token[_] = labels_token.get(_, 0)
-            	labels_token[_] += data[np.array(temp)==2].toarray().sum(axis=0)
+                labels_token[_] = labels_token.get(_, 0)
+                labels_token[_] += temp_data[np.array(temp) == _].toarray().sum(axis=0)
         del(i, _, data, vec, labels, _label)
         return pd.DataFrame(labels_token), vocab
     
 
     def calBdc(self, data, labels):
-        if os.path.exists('setting/{}.csv'.format(self.label)):
-            return pd.read_csv('./setting/{}.csv'.format(self.label), index_col=0)
         if not os.path.exists('setting'):
             os.makedirs('setting')
-
-        df, vocab = self.getDF(data, labels)
+        if not self.debug and os.path.exists('setting/{}data_vocab.pk'.format(self.role)):
+            with open('setting/{}data_vocab.pk'.format(self.role),'rb') as fr:
+                df, vocab = pk.load(fr)
+        else:
+            df, vocab = self.getDF(data, labels)
+            with open('setting/{}data_vocab.pk'.format(self.role), 'wb') as fw:
+                pk.dump([df, vocab], fw)
         labels_counter = Counter(labels)
         label_list = [labels_counter[i] for i in df.columns]
 
@@ -101,7 +102,7 @@ class Featuers:
         df['BDC'] = round(temp_df.sum(axis=1)/np.log2(len(label_list)), 4) + 1
         df['Tokens'] = [vocab[i] for i in df.index]
         df.set_index(['Tokens'], inplace=True)
-        df.to_csv('setting/{}.csv'.format(self.label))
+        df.to_csv('setting/{}_{}.csv'.format(self.role, self.label))
         return df
 
 

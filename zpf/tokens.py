@@ -81,15 +81,6 @@ class Tokens:
             _file_df.to_csv(os.path.join(prepath, file_name), sep=',',
                             encoding="utf-8", index=False)
             del _file_df
-            # for _id in range(len(_file_df)):
-            #     uuid = _file_df['UUID'][_id]
-            #     sentenceList = _file_df['transData.sentenceList'][_id]
-            #     if not self.alone:
-            #         _contents = ['{}:{}'.format(_['role'], _['content']) for _ in sentenceList]
-            #     else:
-            #         _contents = ['{}'.format(_['content']) for _ in sentenceList if _['role'] == 'AGENT']
-            #     contens = '\n'.join(_contents)
-            #     save_file(contens, os.path.join(prepath, '{}-{}.txt'.format(uuid, _labels[i])))
         print('save all contents completed!')
 
     def makeToken(self):
