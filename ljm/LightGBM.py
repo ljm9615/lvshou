@@ -1,26 +1,47 @@
+# encoding=utf-8
 import sys
 import time
 import os
 import numpy as np
 import lightgbm as lgb
+import pickle
 sys.path.append("..")
 from project.interface import SupperModel
 from sklearn.model_selection import KFold
+from project.divide import load_data as ld
 PATH = "../../data/Content"
+SAMPLE_PATH = "../../data/Sample"
 
 
-def load_data(rule, test_file, only=True, train=True):
-    path = os.path.join(PATH, rule)
+def load_data(rule, test_file, total=False, only=True, train=True):
+    path = os.path.join(PATH, rule, test_file[:-1])
     if train:
         if only:
-            weight = np.load(os.path.join(path, rule + "_train_weight_only_" + test_file + ".npy"))
+            token_counter = pickle.load(
+                open(os.path.join(path, rule + "_train_weight_only_" + test_file + ".pkl"), 'rb'))
+            weight = token_counter.toarray()
             label = np.load(os.path.join(path, rule + "_train_label_only_" + test_file + ".npy"))
         else:
-            weight = np.load(os.path.join(path, rule + "_train_weight_" + test_file + ".npy"))
+            token_counter = pickle.load(
+                open(os.path.join(path, rule + "_train_weight_" + test_file + ".pkl"), 'rb'))
+            weight = token_counter.toarray()
             label = np.load(os.path.join(path, rule + "_train_label_" + test_file + ".npy"))
     else:
-        weight = np.load(os.path.join(path, rule + "_test_weight_" + test_file + ".npy"))
-        label = np.load(os.path.join(path, rule + "_test_label_" + test_file + ".npy"))
+        if total:
+            token_counter = pickle.load(open(os.path.join(SAMPLE_PATH, rule, "test_weight_" + test_file + ".pkl"), 'rb'))
+            weight = token_counter.toarray()
+            label = np.load(os.path.join(SAMPLE_PATH, rule, "test_label_" + test_file + ".npy"))
+        else:
+            if only:
+                token_counter = pickle.load(
+                    open(os.path.join(SAMPLE_PATH, rule, "test_weight_only_" + test_file + ".pkl"), 'rb'))
+                weight = token_counter.toarray()
+                label = np.load(os.path.join(SAMPLE_PATH, rule, "test_label_only_" + test_file + ".npy"))
+            else:
+                token_counter = pickle.load(
+                    open(os.path.join(SAMPLE_PATH, rule, "test_weight_" + test_file + ".pkl"), 'rb'))
+                weight = token_counter.toarray()
+                label = np.load(os.path.join(SAMPLE_PATH, rule, "test_label_" + test_file + ".npy"))
     return weight, label
 
 
@@ -28,18 +49,33 @@ class LGBM(SupperModel):
     def __init__(self, model, param, **kags):
         super(SupperModel, self).__init__()
         self.params = param
-        self.model = model
+        self.model = model(num_leaves=self.params.get("num_leaves"),
+                           max_depth=self.params.get("max_depth"),
+                           n_estimators=self.params.get("n_estimators"),
+                           n_jobs=self.params.get("n_jobs"),
+                           learning_rate=self.params.get("learning_rate"),
+                           colsample_bytree=self.params.get("colsample_bytree"),
+                           subsample=self.params.get("subsample"))
         self.clf = None
         self.best_iters = []
 
-    def cv(self, X_train, y_train, k_fold):
+    def cv(self, X_train, y_train, k_fold, test_file, only, rule):
+
+        if only:
+            if test_file[:-1] == "sample":
+                path = os.path.join(PATH, rule, "result", "sample_true")
+            else:
+                path = os.path.join(PATH, rule, "result", "sample_proportion_true")
+        else:
+            if test_file[:-1] == "sample":
+                path = os.path.join(PATH, rule, "result", "sample_false")
+            else:
+                path = os.path.join(PATH, rule, "result", "sample_proportion_false")
+
         print("using " + str(k_fold) + " cross validation...")
-        # lgb_train = lgb.Dataset(X_train, y_train)
-        # cv_result = self.model.cv(self.params, lgb_train, nfold=k_fold, shuffle=True, metrics="rmse",
-        #                           early_stopping_rounds=early_stopping_rounds, seed=2018)
-        # print(cv_result)
         kf = KFold(n_splits=k_fold)
         preds = []
+        probs = []
         for train_idx, test_idx in kf.split(X_train):
             print(train_idx, test_idx)
             X = X_train[train_idx]
@@ -47,52 +83,68 @@ class LGBM(SupperModel):
             X_val = X_train[test_idx]
             y_val = y_train[test_idx]
 
-            # lgb_train = lgb.Dataset(X, y)
-            # lgb_eval = lgb.Dataset(X_val, y_val)
-            _model = self.model(num_leaves=self.params.get("num_leaves"),
-                                max_depth=self.params.get("max_depth"),
-                                n_estimators=self.params.get("n_estimators"),
-                                n_jobs=self.params.get("n_jobs"),
-                                learning_rate=self.params.get("learning_rate"),
-                                colsample_bytree=self.params.get("colsample_bytree"),
-                                subsample=self.params.get("subsample"))
-            lgb_model = _model.fit(
+            lgb_model = self.model.fit(
                 X, y, eval_set=[(X, y), (X_val, y_val)], early_stopping_rounds=self.params.get("early_stopping_rounds"),
                 verbose=0)
 
             print("predicting...")
             test_preds = lgb_model.predict(X_val)
+            test_probs = lgb_model.predict_proba(X_val)[:, 1]
             preds.extend(test_preds)
+            probs.extend(test_probs)
             self.best_iters.append(lgb_model.best_iteration_)
+
+        pickle.dump(preds, open(os.path.join(path, test_file + "_preds.pkl"), 'wb'))
+        pickle.dump(probs, open(os.path.join(path, test_file + "_probs.pkl"), 'wb'))
+
         print("validation result...")
         self.acc(y_train, preds)
         print("best iters:")
         print(self.best_iters)
+        with open(os.path.join(PATH, rule, "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write((str(sum(self.best_iters) // len(self.best_iters))))
+            f.write('\n')
+            f.write('\n')
 
     def train(self, X_train, y_train):
-        _model = self.model(num_leaves=self.params.get("num_leaves"),
-                            max_depth=self.params.get("max_depth"),
-                            n_estimators=(sum(self.best_iters) // len(self.best_iters)),
-                            n_jobs=self.params.get("n_jobs"),
-                            learning_rate=self.params.get("learning_rate"),
-                            colsample_bytree=self.params.get("colsample_bytree"),
-                            subsample=self.params.get("subsample"))
+        self.model.n_estimators = (sum(self.best_iters) // len(self.best_iters))
+        # self.model.n_estimators = 1256
         print("training...")
-        print("iters:", str(_model.n_estimators))
-        self.clf = _model.fit(X_train, y_train, verbose=1)
+        print("iters:", str(self.model.n_estimators))
+        self.clf = self.model.fit(X_train, y_train, verbose=1)
 
-    def predict(self, X_test):
-        return self.clf.predict(X_test)
+    def predict(self, X_test, proba=False):
+        if proba:
+            return self.clf.predict_proba(X_test)[:, 1]
+        else:
+            return self.clf.predict(X_test)
 
-    def saveModel(self, save_path):
-        pass
-    def loadModel(self, save_path):
-        pass
+
+def load_test(test_file, alone):
+    import pandas as pd
+    test_uuid = pd.read_csv(os.path.join('../../data/Sample', test_file + ".txt"), header=None)
+    rules = os.listdir(PATH)
+    rules = [os.path.splitext(_)[0] for _ in rules]  # 所有违规标签
+    if not alone:
+        suffix = "_agent_tokens.csv"
+    else:
+        suffix = "_tokens.csv"
+    test_data = pd.DataFrame()
+    for rule in rules:
+        _ = ld(os.path.join(PATH, rule, rule + suffix))
+        test_data = pd.concat([test_data, _], axis=0)
+
+    # 测试集样本空间
+    test_data.drop_duplicates(['UUID'], inplace=True)
+    test_data.reset_index(inplace=True)
+    print(len(test_data))
+    data = test_data[test_data['UUID'].isin(test_uuid.values[:, 0])]
+    data.reset_index(drop=True, inplace=True)
+    return data
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    X_train, y_train = load_data("部门名称", test_file="sample1", only=False)
     param = {
         "num_leaves": 35,
         "max_depth": 7,
@@ -103,15 +155,107 @@ if __name__ == "__main__":
         "subsample": 0.8,
         "early_stopping_rounds": 100,
     }
-    model = LGBM(lgb.LGBMClassifier, param)
-    model.cv(X_train, y_train, 5)
-    model.train(X_train, y_train)
-    del X_train, y_train
-    X_test, y_test = load_data("部门名称", test_file="sample1")
-    preds = model.predict(X_test)
-    # with open(r"E:\cike\lvshou\data\result_sample1.txt", 'w', encoding='utf-8') as f:
-    #     for p in preds:
-    #         f.write(str(p))
-    #         f.write('\n')
-    model.acc(y_test, preds)
+    # test_file = "sample_proportion"
+
+    rule = "敏感词"
+    for i in range(5):
+        test_file = "sample" + str(i+1)
+        X_train, y_train = load_data(rule, test_file=test_file, total=False, only=False, train=True)
+        X_test, y_test = load_data(rule, test_file=test_file, total=False, only=False, train=False)
+
+        print("Train:", X_train.shape)
+        print("Test:", X_test.shape)
+        with open(os.path.join(PATH, rule, "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write(str(X_train.shape))
+            f.write('\n')
+            f.write(str(X_test.shape))
+            f.write('\n')
+            f.write('\n')
+        model = LGBM(lgb.LGBMClassifier, param)
+        model.cv(X_train, y_train, 5, test_file, only=False, rule=rule)
+        model.train(X_train, y_train)
+        preds = model.predict(X_test, proba=True)
+        # model.acc(y_test, preds)
+
+        test_data = load_test(test_file, alone=False)
+        test_data['result'] = y_test
+        test_data['pred'] = preds
+        test_data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'result', 'pred']]\
+            .to_csv(os.path.join(PATH, rule, test_file + "_pred.csv"), sep=',', encoding='utf-8')
+
+    for i in range(5):
+        test_file = "sample" + str(i+1)
+        X_train, y_train = load_data(rule, test_file=test_file, total=False, only=True, train=True)
+        X_test, y_test = load_data(rule, test_file=test_file, total=False, only=True, train=False)
+
+        print("Train:", X_train.shape)
+        print("Test:", X_test.shape)
+        with open(os.path.join(PATH, rule, "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write(str(X_train.shape))
+            f.write('\n')
+            f.write(str(X_test.shape))
+            f.write('\n')
+            f.write('\n')
+        model = LGBM(lgb.LGBMClassifier, param)
+        model.cv(X_train, y_train, 5, test_file, only=True, rule=rule)
+        model.train(X_train, y_train)
+        preds = model.predict(X_test, proba=True)
+        # model.acc(y_test, preds)
+
+        test_data = load_test(test_file, alone=False)
+        test_data['result'] = y_test
+        test_data['pred'] = preds
+        test_data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'result', 'pred']]\
+            .to_csv(os.path.join(PATH, rule, test_file + "_pred_only.csv"), sep=',', encoding='utf-8')
+
+    for i in range(5):
+        test_file = "sample_proportion" + str(i+1)
+        X_train, y_train = load_data(rule, test_file=test_file, total=False, only=False, train=True)
+        X_test, y_test = load_data(rule, test_file=test_file, total=False, only=False, train=False)
+
+        print("Train:", X_train.shape)
+        print("Test:", X_test.shape)
+        with open(os.path.join(PATH, rule, "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write(str(X_train.shape))
+            f.write('\n')
+            f.write(str(X_test.shape))
+            f.write('\n')
+            f.write('\n')
+        model = LGBM(lgb.LGBMClassifier, param)
+        model.cv(X_train, y_train, 5, test_file, only=False, rule=rule)
+        model.train(X_train, y_train)
+        preds = model.predict(X_test, proba=True)
+        # model.acc(y_test, preds)
+
+        test_data = load_test(test_file, alone=False)
+        test_data['result'] = y_test
+        test_data['pred'] = preds
+        test_data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'result', 'pred']]\
+            .to_csv(os.path.join(PATH, rule, test_file + "_pred.csv"), sep=',', encoding='utf-8')
+
+    for i in range(5):
+        test_file = "sample_proportion" + str(i+1)
+        X_train, y_train = load_data(rule, test_file=test_file, total=False, only=True, train=True)
+        X_test, y_test = load_data(rule, test_file=test_file, total=False, only=True, train=False)
+
+        print("Train:", X_train.shape)
+        print("Test:", X_test.shape)
+        with open(os.path.join(PATH, rule, "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write(str(X_train.shape))
+            f.write('\n')
+            f.write(str(X_test.shape))
+            f.write('\n')
+            f.write('\n')
+        model = LGBM(lgb.LGBMClassifier, param)
+        model.cv(X_train, y_train, 5, test_file, only=True, rule=rule)
+        model.train(X_train, y_train)
+        preds = model.predict(X_test, proba=True)
+        # model.acc(y_test, preds)
+
+        test_data = load_test(test_file, alone=False)
+        test_data['result'] = y_test
+        test_data['pred'] = preds
+        test_data[['UUID', 'analysisData.illegalHitData.ruleNameList', 'correctInfoData.correctResult', 'result', 'pred']]\
+            .to_csv(os.path.join(PATH, rule, test_file + "_pred_only.csv"), sep=',', encoding='utf-8')
+
     print('time cost is', time.time() - start_time)

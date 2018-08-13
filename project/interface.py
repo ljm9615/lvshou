@@ -1,5 +1,5 @@
 # encoding=utf-8
-from sklearn.metrics import accuracy_score, f1_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 import pickle as pk
 import os
 
@@ -30,10 +30,25 @@ class SupperModel:
             The predict by your model on the val dataset.
         """
         Y = list(Y); Y_pred = list(Y_pred)
+        print('precision:', precision_score(Y, Y_pred))
         print('accuracy:', accuracy_score(Y, Y_pred))
         print('recall:', recall_score(Y, Y_pred))
         print('micro_F1:', f1_score(Y, Y_pred, average='micro'))
         print('macro_F1:', f1_score(Y, Y_pred, average='macro'))
+
+        PATH = "../../data/Content"
+        with open(os.path.join(PATH, "禁忌称谓", "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
+            f.write(str(accuracy_score(Y, Y_pred)))
+            f.write('\n')
+            f.write(str(precision_score(Y, Y_pred)))
+            f.write('\n')
+            f.write(str(recall_score(Y, Y_pred)))
+            f.write('\n')
+            f.write(str(f1_score(Y, Y_pred, average='micro')))
+            f.write('\n')
+            f.write(str(f1_score(Y, Y_pred, average='macro')))
+            f.write('\n')
+            f.write('\n')
 
     def train(self, X_train, y_train):
         """ Training the model

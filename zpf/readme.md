@@ -20,5 +20,3 @@
     p_{t,c_i} = \frac{p(t|c_i)}{\sum_{i=1}^{|C|}p(t|c_i)}
     p(t|c_i) = \frac{f(t,c_i)}{f(c_i)} $$
     $ f(t,c_i)表示词t在类别c_i中出现的次数;f(c_i)表示类别c_i所拥有的文档数 $
-
-

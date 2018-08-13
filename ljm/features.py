@@ -1,31 +1,50 @@
+# encoding=utf-8
 import pandas as pd
 import numpy as np
 import os
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import sys
 import time
-sys.path.append("..")
-from project.divide import load_data, PATH1, PATH2
-
+sys.path.append("../project")
+from divide import load_data, PATH1, PATH2
+import pickle
 PATH = "../../data/Content"
-TEST_PATH = "../../data/Content"
+TEST_PATH = "../../data/Sample"
+
+
+def get_window_words(sentence, key_words, windows):
+    words = []
+    all_words = sentence.split(' ')
+    index = [i for i, x in enumerate(all_words) if x in key_words]
+    for i in index:
+        begin = i - windows
+        end = i + windows + 1
+        if begin < 0:
+            begin = 0
+        if end > len(all_words):
+            end = len(all_words)
+        words.extend(all_words[begin:end])
+    # print(len(all_words), len(index), len(words))
+    return ' '.join(words)
 
 
 class Features(object):
-    def __init__(self, rule, alone, max_df, min_df, max_features, use_idf=False):
-        self.Counter = CountVectorizer(max_df=max_df, min_df=min_df, max_features=max_features)
-        if use_idf:
-            self.Counter = TfidfVectorizer(max_df=max_df, min_df=min_df, max_features=max_features, use_idf=True)
-        if not alone:
-            file_name = rule + "_agent_tokens.csv"
-        else:
-            file_name = rule + "_tokens.csv"
+    def __init__(self, rule, alone, max_df, min_df, max_features, window=None, use_idf=False):
         self.rule = rule
         self.alone = alone
         self.path = os.path.join(PATH, rule)
-        self.data = load_data(path=os.path.join(self.path, file_name))
+        if not self.alone:
+            self.data = load_data(os.path.join(PATH, rule, rule + "_agent_tokens.csv"))
+        else:
+            self.data = load_data(os.path.join(PATH, rule, rule + "_tokens.csv"))
         self.tokens = "transData.sentenceList"
         self.seed = 2018
+        self.Counter = None
+        self.max_df = max_df
+        self.min_df = min_df
+        self.max_features = max_features
+        self.use_idf = use_idf
+        self.window = window
 
     def sample(self, test_uuid, only=True):
         """
@@ -78,26 +97,51 @@ class Features(object):
             file_name = self.rule + "_train_only_" + test_file + ".csv"
         else:
             file_name = self.rule + "_train_" + test_file + ".csv"
-        if os.path.exists(os.path.join(self.path, file_name)):
-            self.data = load_data(os.path.join(self.path, file_name))
+        if os.path.exists(os.path.join(self.path, test_file[:-1], file_name)):
+            self.data = load_data(os.path.join(self.path, test_file[:-1], file_name))
             return
 
         print("sample train data...")
         test_uuid = pd.read_csv(os.path.join('../../data/Sample', test_file + ".txt"), header=None)
         self.data = self.sample(test_uuid, only=only)
         self.data.reset_index(drop=True, inplace=True)
-        self.data.to_csv(os.path.join(self.path, file_name), sep=',', encoding="utf-8", index=False)
+        if self.window:
+            print("window:", self.window)
+            key_words = []
+            with open(os.path.join('../setting', self.rule + ".txt"), 'r', encoding='utf-8') as f:
+                for line in f.readlines():
+                    key_words.append(line.strip())
+            self.data[self.tokens] = self.data[self.tokens].apply(lambda x: get_window_words(x, key_words,
+                                                                                             windows=self.window))
+        self.data.to_csv(os.path.join(self.path, test_file[:-1], file_name), sep=',', encoding="utf-8", index=False)
 
     def load_test(self, test_file):
         test_uuid = pd.read_csv(os.path.join('../../data/Sample', test_file + ".txt"), header=None)
-        data1 = load_data(PATH1)
-        data2 = load_data(PATH2)
-        data = pd.concat([data1, data2])
-        del (data2, data1)
-        data.drop_duplicates(['UUID'], inplace=True)
-        data.reset_index(inplace=True)
-        self.data = data[data['UUID'].isin(test_uuid.values[:, 0])]
+        rules = os.listdir(PATH)
+        rules = [os.path.splitext(_)[0] for _ in rules]  # 所有违规标签
+        if not self.alone:
+            suffix = "_agent_tokens.csv"
+        else:
+            suffix = "_tokens.csv"
+        test_data = pd.DataFrame()
+        for rule in rules:
+            _ = load_data(os.path.join(PATH, rule, rule + suffix))
+            test_data = pd.concat([test_data, _], axis=0)
+
+        # 测试集样本空间
+        test_data.drop_duplicates(['UUID'], inplace=True)
+        test_data.reset_index(inplace=True)
+        print(len(test_data))
+        self.data = test_data[test_data['UUID'].isin(test_uuid.values[:, 0])]
         self.data.reset_index(drop=True, inplace=True)
+        if self.window:
+            print("window:", self.window)
+            key_words = []
+            with open(os.path.join('../setting', self.rule + ".txt"), 'r', encoding='utf-8') as f:
+                for line in f.readlines():
+                    key_words.append(line.strip())
+            self.data[self.tokens] = self.data[self.tokens].apply(lambda x: get_window_words(x, key_words,
+                                                                                             windows=self.window))
 
     def get_label(self, _file):
         label = []
@@ -110,39 +154,158 @@ class Features(object):
                     if self.rule == item:
                         label.append(1 if self.data['correctInfoData.correctResult'][counter].
                                      get("correctResult")[i] == '1' else 0)
-        for i in range(len(label)):
-            if label[i] == 1:
-                print(self.data['analysisData.illegalHitData.ruleNameList'][i],
-                      self.data['correctInfoData.correctResult'][i])
-        np.array(label).dump(os.path.join(self.path, _file))
+        # for i in range(len(label)):
+        #     if label[i] == 1:
+        #         print(self.data['analysisData.illegalHitData.ruleNameList'][i],
+        #               self.data['correctInfoData.correctResult'][i])
+        np.array(label).dump(_file)
 
-    def get_weight(self, test_file, only, train=True):
-        if train:
-            print("load train data...")
-            self.load_train(test_file, only)
-            if only:
-                file_name = self.rule + "_train_weight_only_" + test_file + ".npy"
-                label_name = self.rule + "_train_label_only_" + test_file + ".npy"
+    def get_weight(self, test_file, only, total=False, train=True):
+        if total and not os.path.exists(os.path.join(self.path, test_file[:-1], "CountVectorizer_total.pkl")):
+            print("generate vocabulary...")
+            rules = os.listdir(PATH)
+            rules = [os.path.splitext(_)[0] for _ in rules]  # 所有违规标签
+            if not self.alone:
+                suffix = "_agent_tokens.csv"
             else:
-                file_name = self.rule + "_train_weight_" + test_file + ".npy"
+                suffix = "_tokens.csv"
+            total_data = pd.DataFrame()
+            for rule in rules:
+                _ = load_data(os.path.join(PATH, rule, rule + suffix))
+                total_data = pd.concat([total_data, _], axis=0)
+
+            # 测试集样本空间
+            total_data.drop_duplicates(['UUID'], inplace=True)
+            total_data.reset_index(inplace=True)
+            print("fitting in data: ", total_data.shape)
+            self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
+                                           max_features=self.max_features)
+            self.Counter.fit(total_data[self.tokens])
+            pickle.dump(self.Counter, open(os.path.join(self.path, test_file[:-1], "CountVectorizer_total.pkl"), 'wb'))
+
+        if train:
+            if not os.path.exists(os.path.join(self.path, test_file[:-1])):
+                os.makedirs(os.path.join(self.path, test_file[:-1]))
+            print("load train data...")
+            # 生成保存文件名
+            if only:
+                file_name = self.rule + "_train_weight_only_" + test_file + ".pkl"
+                label_name = self.rule + "_train_label_only_" + test_file + ".npy"
+                if not total:
+                    pickle_file = "CountVectorizer_" + test_file + "_only" + ".pkl"
+                else:
+                    pickle_file = "CountVectorizer_total.pkl"
+            else:
+                file_name = self.rule + "_train_weight_" + test_file + ".pkl"
                 label_name = self.rule + "_train_label_" + test_file + ".npy"
+                if not total:
+                    pickle_file = "CountVectorizer_" + test_file + ".pkl"
+                else:
+                    pickle_file = "CountVectorizer_total.pkl"
+
+            # 特征文件不存在，生成
+            # ../../data/Sample/rule/sample/label_name
+            if not os.path.exists(os.path.join(self.path, test_file[:-1], label_name)):
+                self.load_train(test_file, only)
+
+                if os.path.exists(os.path.join(self.path, test_file[:-1], pickle_file)):
+                    print("load counter_vectorizer...")
+                    self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
+                else:
+                    print("fitting in data: ", self.data.shape)
+                    self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
+                                                   max_features=self.max_features)
+                    self.Counter.fit(self.data[self.tokens])
+                    pickle.dump(self.Counter, open(os.path.join(self.path, test_file[:-1], pickle_file), 'wb'))
+
+                print("get label...")
+                self.get_label(os.path.join(self.path, test_file[:-1], label_name))
+                print("get weight...")
+                token_counter = self.Counter.transform(self.data['transData.sentenceList'].values)
+                print(len(self.Counter.vocabulary_.items()))
+                weight = token_counter.toarray()
+                print(weight.shape)
+                pickle.dump(token_counter, open(os.path.join(self.path, test_file[:-1], file_name), 'wb'))
+
+        # 测试集特征
         else:
             print("load test data...")
-            self.load_test(test_file)
-            file_name = self.rule + "_test_weight_" + test_file + ".npy"
-            label_name = self.rule + "_test_label_" + test_file + ".npy"
-        if not os.path.exists(os.path.join(self.path, file_name)):
-            print("get label...")
-            self.get_label(label_name)
-            print("get weight...")
-            token_counter = self.Counter.fit_transform(self.data['transData.sentenceList'].values)
-            weight = token_counter.toarray()
-            print(weight.shape)
-            weight.dump(os.path.join(self.path, file_name))
+            # 生成保存文件名
+            if only:
+                file_name = "test_weight_only_" + test_file + ".pkl"
+                label_name = "test_label_only_" + test_file + ".npy"
+                if not total:
+                    pickle_file = "CountVectorizer_" + test_file + "_only" + ".pkl"
+                else:
+                    pickle_file = "CountVectorizer_total.pkl"
+                    file_name = "test_weight_" + test_file + ".pkl"
+                    label_name = "test_label_" + test_file + ".npy"
+            else:
+                file_name = "test_weight_" + test_file + ".pkl"
+                label_name = "test_label_" + test_file + ".npy"
+                if not total:
+                    pickle_file = "CountVectorizer_" + test_file + ".pkl"
+                else:
+                    pickle_file = "CountVectorizer_total.pkl"
+
+            # 测试集特征文件不存在，生成
+            if not os.path.exists(os.path.join(TEST_PATH, self.rule, label_name)):
+                self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
+                self.load_test(test_file)
+
+                print("get label...")
+                self.get_label(os.path.join(TEST_PATH, self.rule, label_name))
+
+                print("get weight...")
+                token_counter = self.Counter.transform(self.data['transData.sentenceList'].values)
+                weight = token_counter.toarray()
+                print(weight.shape)
+                pickle.dump(token_counter, open(os.path.join(TEST_PATH, self.rule, file_name), 'wb'))
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    f = Features("部门名称", alone=True, max_df=0.5, min_df=3, max_features=10000)
-    f.get_weight("sample1", only=False, train=True)
+
+    rule = "禁忌称谓"
+    max_features = 15000
+    max_df = 0.5
+    min_df = 3
+    window = 5
+    total = False
+    # 训练集
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample" + str(i+1), only=False, total=total, train=True)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample" + str(i+1), only=True, total=total, train=True)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample_proportion" + str(i+1), only=False, total=total, train=True)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample_proportion" + str(i+1), only=True, total=total, train=True)
+
+    # 测试集
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample" + str(i+1), only=True, total=total, train=False)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample" + str(i+1), only=False, total=total, train=False)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample_proportion" + str(i+1), only=True, total=total, train=False)
+    for i in range(5):
+        print(i+1)
+        f = Features(rule, alone=False, max_df=max_df, min_df=min_df, max_features=max_features, window=window)
+        f.get_weight("sample_proportion" + str(i+1), only=False, total=total, train=False)
+
     print('time cost is', time.time() - start_time)

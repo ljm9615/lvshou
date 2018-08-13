@@ -131,7 +131,7 @@ class Tokens:
 
 if __name__ == '__main__':
     start_time = time.time()
-    _tokens = Tokens(alone=True)
+    _tokens = Tokens(alone=False)
     # print(get_stopwords())
     _tokens.makeContents()
     _tokens.makeToken()

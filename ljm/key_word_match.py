@@ -1,14 +1,7 @@
 import pandas as pd
-import csv
+from project.divide import load_data, PATH1, PATH2
 
-
-def load_data():
-    data = pd.read_csv(r"E:\cike\lvshou\zhijian_data\zhijian_data_20180709\data_cut.csv", sep=',', encoding="utf-8")
-    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].\
-        apply(eval).apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
-                          .replace("过度承诺效果问题", "过度承诺效果") for word in x])
-    data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
-    return data
+PATH = "../../data/Content"
 
 
 def get_precision(data, rule):
@@ -57,5 +50,5 @@ def get_precision(data, rule):
 
 
 if __name__ == "__main__":
-    data = load_data()
-    get_precision(data, "禁忌称谓")
+    rules = ['敏感词', '部门名称', '禁忌称谓', '不违规']
+
