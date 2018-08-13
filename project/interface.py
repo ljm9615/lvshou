@@ -36,20 +36,6 @@ class SupperModel:
         print('micro_F1:', f1_score(Y, Y_pred, average='micro'))
         print('macro_F1:', f1_score(Y, Y_pred, average='macro'))
 
-        PATH = "../../data/Content"
-        with open(os.path.join(PATH, "禁忌称谓", "window_sample_f_t_pro_f_t.txt"), 'a', encoding='utf-8') as f:
-            f.write(str(accuracy_score(Y, Y_pred)))
-            f.write('\n')
-            f.write(str(precision_score(Y, Y_pred)))
-            f.write('\n')
-            f.write(str(recall_score(Y, Y_pred)))
-            f.write('\n')
-            f.write(str(f1_score(Y, Y_pred, average='micro')))
-            f.write('\n')
-            f.write(str(f1_score(Y, Y_pred, average='macro')))
-            f.write('\n')
-            f.write('\n')
-
     def train(self, X_train, y_train):
         """ Training the model
 

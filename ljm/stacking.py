@@ -5,13 +5,13 @@ import os
 import numpy as np
 import lightgbm as lgb
 import pickle
-sys.path.append("..")
 import pandas as pd
 from project.interface import SupperModel
 from sklearn.model_selection import KFold
 from project.divide import load_data, PATH1, PATH2
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import random
+sys.path.append("..")
 
 PATH = "../../data/Content"
 SAMPLE_PATH = "../../data/Sample"
@@ -246,10 +246,11 @@ if __name__ == "__main__":
     print("all train label size", train_label.shape)
 
     random.seed(2018)
-    idx = random.sample(range(len(train_label)), k=int(len(train_label) * 0.2))
+    train_idx = random.sample(range(len(train_label)), k=int(len(train_label) * 0.2))
+    eval_idx = [i for i in range(len(train_label)) if i not in train_idx]
 
-    train_data, eval_data = train_feature[idx], train_feature[~idx]
-    train_label, eval_label = train_label[idx], train_label[~idx]
+    train_data, eval_data = train_feature[train_idx], train_feature[eval_idx]
+    train_label, eval_label = train_label[train_idx], train_label[eval_idx]
 
     print("train size", train_data.shape, "train label", train_label.shape)
     print("eval size", eval_data.shape, "eval label", eval_label.shape)
