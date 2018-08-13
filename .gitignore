@@ -105,12 +105,10 @@ venv.bak/
 .mypy_cache/
 
 # data
+zpf/Sample
 zpf/setting/*
-zpf/.data/*
 .idea
 zpf/result*
 run.sh
 *.txt
 data
-
-
