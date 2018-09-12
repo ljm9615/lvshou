@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # print(len(all_sample_rate), sorted(all_sample_rate.items(), key=lambda x: x[1], reverse=True))
     # print(len(corrent_sample_rate), sorted(corrent_sample_rate.items(), key=lambda x: x[1], reverse=True))
 
-    # test_file = "sample_proportion"
+    test_file = "sample_proportion"
     test_file = "sample"
     for i in range(5):
         print("禁忌称谓", test_file + str(i+1))

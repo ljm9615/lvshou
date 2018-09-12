@@ -56,6 +56,7 @@ class Features(object):
         :return: 训练集
         """
         self.data = self.data[~self.data['UUID'].isin(test_uuid.values[:, 0])]
+        print("pos data:", len(self.data))
         print("是否只从不出现任何违规的数据中采集负样本: " + str(only))
         # 负样本从不出现任何违规的数据中提取
         if only:
@@ -77,10 +78,14 @@ class Features(object):
                 _ = load_data(os.path.join(PATH, rule, rule + suffix))
                 neg_data = pd.concat([neg_data, _], axis=0)
 
-            # 负样本空间
-            neg_data.drop_duplicates(['UUID'], inplace=True)
+        # 负样本空间
+        neg_data.drop_duplicates(['UUID'], inplace=True)
+        neg_data = neg_data[~neg_data['UUID'].isin(test_uuid.values[:, 0])]
+        neg_data = neg_data[~neg_data['UUID'].isin(self.data['UUID'])]
+        print("neg data:", len(neg_data))
 
-        train_data = pd.concat([self.data, neg_data.sample(n=len(self.data), random_state=self.seed)], axis=0)
+        train_data = pd.concat([self.data, neg_data], axis=0)
+        # train_data = pd.concat([self.data, neg_data.sample(n=len(self.data) * 2, random_state=self.seed)], axis=0)
         train_data = train_data.sample(frac=1, random_state=self.seed)
         return train_data
 
@@ -113,7 +118,8 @@ class Features(object):
                     key_words.append(line.strip())
             self.data[self.tokens] = self.data[self.tokens].apply(lambda x: get_window_words(x, key_words,
                                                                                              windows=self.window))
-        self.data.to_csv(os.path.join(self.path, test_file[:-1], file_name), sep=',', encoding="utf-8", index=False)
+        print(len(self.data))
+        # self.data.to_csv(os.path.join(self.path, test_file[:-1], file_name), sep=',', encoding="utf-8", index=False)
 
     def load_test(self, test_file):
         test_uuid = pd.read_csv(os.path.join('../../data/Sample', test_file + ".txt"), header=None)
@@ -161,7 +167,8 @@ class Features(object):
         np.array(label).dump(_file)
 
     def get_weight(self, test_file, only, total=False, train=True):
-        if total and not os.path.exists(os.path.join(self.path, test_file[:-1], "CountVectorizer_total.pkl")):
+        # if total and not os.path.exists(os.path.join(self.path, test_file[:-1], "Vectorizer_total_ngram_1_2.pkl")):
+        if total and not os.path.exists(os.path.join("../../data", "Vectorizer_total_ngram_1_2.pkl")):
             print("generate vocabulary...")
             rules = os.listdir(PATH)
             rules = [os.path.splitext(_)[0] for _ in rules]  # 所有违规标签
@@ -174,14 +181,31 @@ class Features(object):
                 _ = load_data(os.path.join(PATH, rule, rule + suffix))
                 total_data = pd.concat([total_data, _], axis=0)
 
-            # 测试集样本空间
+            # 样本空间
             total_data.drop_duplicates(['UUID'], inplace=True)
             total_data.reset_index(inplace=True)
+
+            if self.window:
+                print("window:", self.window)
+                key_words = []
+                with open(os.path.join('../setting', self.rule + ".txt"), 'r', encoding='utf-8') as f:
+                    for line in f.readlines():
+                        key_words.append(line.strip())
+                    total_data[self.tokens] = total_data[self.tokens].apply(lambda x: get_window_words(x, key_words,
+                                                                            windows=self.window))
             print("fitting in data: ", total_data.shape)
-            self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
-                                           max_features=self.max_features)
+            self.Counter = TfidfVectorizer(max_df=self.max_df, min_df=self.min_df, use_idf=True,
+                                           max_features=self.max_features, ngram_range=(1, 2))
+            # self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
+            #                                max_features=self.max_features)
             self.Counter.fit(total_data[self.tokens])
-            pickle.dump(self.Counter, open(os.path.join(self.path, test_file[:-1], "CountVectorizer_total.pkl"), 'wb'))
+            if not os.path.exists(os.path.join(self.path, test_file[:-1])):
+                os.mkdir(os.path.join(self.path, test_file[:-1]))
+            if not os.path.exists(os.path.join(self.path, 'sample_proportion')):
+                os.mkdir(os.path.join(self.path, test_file[:-1]))
+            pickle.dump(self.Counter, open(os.path.join(self.path, test_file[:-1], "Vectorizer_total_ngram_1_2.pkl"), 'wb'))
+            pickle.dump(self.Counter,
+                        open(os.path.join(self.path, 'sample_proportion', "Vectorizer_total_ngram_1_2.pkl"), 'wb'))
 
         if train:
             if not os.path.exists(os.path.join(self.path, test_file[:-1])):
@@ -194,27 +218,31 @@ class Features(object):
                 if not total:
                     pickle_file = "CountVectorizer_" + test_file + "_only" + ".pkl"
                 else:
-                    pickle_file = "CountVectorizer_total.pkl"
+                    pickle_file = "Vectorizer_total_ngram_1_2.pkl"
             else:
                 file_name = self.rule + "_train_weight_" + test_file + ".pkl"
                 label_name = self.rule + "_train_label_" + test_file + ".npy"
                 if not total:
                     pickle_file = "CountVectorizer_" + test_file + ".pkl"
                 else:
-                    pickle_file = "CountVectorizer_total.pkl"
+                    pickle_file = "Vectorizer_total_ngram_1_2.pkl"
 
             # 特征文件不存在，生成
             # ../../data/Sample/rule/sample/label_name
             if not os.path.exists(os.path.join(self.path, test_file[:-1], label_name)):
                 self.load_train(test_file, only)
 
-                if os.path.exists(os.path.join(self.path, test_file[:-1], pickle_file)):
+                # if os.path.exists(os.path.join(self.path, test_file[:-1], pickle_file)):
+                if os.path.exists(os.path.join("../../data", pickle_file)):
                     print("load counter_vectorizer...")
-                    self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
+                    self.Counter = pickle.load(open(os.path.join("../../data", pickle_file), 'rb'))
+                    # self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
                 else:
                     print("fitting in data: ", self.data.shape)
-                    self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
-                                                   max_features=self.max_features)
+                    self.Counter = TfidfVectorizer(max_df=self.max_df, min_df=self.min_df, use_idf=True,
+                                                   max_features=self.max_features, ngram_range=(1, 1))
+                    # self.Counter = CountVectorizer(max_df=self.max_df, min_df=self.min_df,
+                    #                                max_features=self.max_features)
                     self.Counter.fit(self.data[self.tokens])
                     pickle.dump(self.Counter, open(os.path.join(self.path, test_file[:-1], pickle_file), 'wb'))
 
@@ -237,7 +265,7 @@ class Features(object):
                 if not total:
                     pickle_file = "CountVectorizer_" + test_file + "_only" + ".pkl"
                 else:
-                    pickle_file = "CountVectorizer_total.pkl"
+                    pickle_file = "Vectorizer_total_ngram_1_2.pkl"
                     file_name = "test_weight_" + test_file + ".pkl"
                     label_name = "test_label_" + test_file + ".npy"
             else:
@@ -246,11 +274,14 @@ class Features(object):
                 if not total:
                     pickle_file = "CountVectorizer_" + test_file + ".pkl"
                 else:
-                    pickle_file = "CountVectorizer_total.pkl"
+                    pickle_file = "Vectorizer_total_ngram_1_2.pkl"
 
+            if not os.path.exists(os.path.join(TEST_PATH, self.rule)):
+                os.mkdir(os.path.join(TEST_PATH, self.rule))
             # 测试集特征文件不存在，生成
             if not os.path.exists(os.path.join(TEST_PATH, self.rule, label_name)):
-                self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
+                self.Counter = pickle.load(open(os.path.join("../../data", pickle_file), 'rb'))
+                # self.Counter = pickle.load(open(os.path.join(self.path, test_file[:-1], pickle_file), 'rb'))
                 self.load_test(test_file)
 
                 print("get label...")
@@ -266,12 +297,12 @@ class Features(object):
 if __name__ == "__main__":
     start_time = time.time()
 
-    rule = "禁忌称谓"
+    rule = "诋毁同事" # ""无中生有"
     max_features = 15000
     max_df = 0.5
     min_df = 3
-    window = 5
-    total = False
+    window = 0
+    total = True
     # 训练集
     for i in range(5):
         print(i+1)

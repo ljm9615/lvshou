@@ -15,13 +15,25 @@ def load_data(path=PATH1):
             data = pd.read_csv(fr1, sep=',', encoding="gbk")
     finally:
         pass
-    data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)\
-        .apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
-                          .replace("过度承诺效果问题", "过度承诺效果")
-                          .replace("投诉倾向", "投诉")
-                          .replace("提示客户录音或实物有法律效力", "提示通话有录音")
-                          .replace("夸大产品功效", "夸大产品效果")for word in x])
-    data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
+    try:
+        data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval)\
+            .apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                              .replace("过度承诺效果问题", "过度承诺效果")
+                              .replace("投诉倾向", "投诉")
+                              .replace("提示客户录音或实物有法律效力", "提示通话有录音")
+                              .replace("夸大产品功效", "夸大产品效果")for word in x])
+        data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
+    except Exception:
+        data.columns = ['UUID', 'relateData.sourceCustomerId', 'relateData.workNo', 'transData.sentenceList',
+                        'manualData.isChecked', 'analysisData.isIllegal', 'analysisData.illegalHitData.ruleNameList',
+                        'correctInfoData.correctResult', 'content', 'mark_tag']
+        data['analysisData.illegalHitData.ruleNameList'] = data['analysisData.illegalHitData.ruleNameList'].apply(eval) \
+            .apply(lambda x: [word.replace("禁忌部门名称", "部门名称")
+                   .replace("过度承诺效果问题", "过度承诺效果")
+                   .replace("投诉倾向", "投诉")
+                   .replace("提示客户录音或实物有法律效力", "提示通话有录音")
+                   .replace("夸大产品功效", "夸大产品效果") for word in x])
+        data['correctInfoData.correctResult'] = data['correctInfoData.correctResult'].apply(eval)
     return data
 
 
